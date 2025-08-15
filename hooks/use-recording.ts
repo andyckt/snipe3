@@ -55,27 +55,39 @@ export function useRecording(streamRef: React.RefObject<MediaStream | null>) {
         }
       }
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         const mimeType = mediaRecorder.mimeType
         const fileExtension = mimeType.includes("mp4") ? "mp4" : "webm"
 
         // Create a blob from the recorded chunks
         const blob = new Blob(recordedChunksRef.current, { type: mimeType })
 
-        // Create a download link for the recorded video
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement("a")
-        a.style.display = "none"
-        a.href = url
-        a.download = `camera-recording.${fileExtension}`
-        document.body.appendChild(a)
-        a.click()
-
-        // Clean up
-        setTimeout(() => {
-          document.body.removeChild(a)
-          window.URL.revokeObjectURL(url)
-        }, 100)
+        try {
+          // Create a File object from the blob
+          const file = new File([blob], `camera-recording.${fileExtension}`, { type: mimeType })
+          
+          // Create FormData and append the file
+          const formData = new FormData()
+          formData.append('file', file)
+          
+          // Upload the file to our API endpoint
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          })
+          
+          const result = await response.json()
+          
+          if (result.success) {
+            console.log('Video uploaded successfully:', result.fileUrl)
+          } else {
+            console.error('Error uploading video:', result.error)
+            alert('Failed to save the recording. Please try again.')
+          }
+        } catch (error) {
+          console.error('Error uploading video:', error)
+          alert('Failed to save the recording. Please try again.')
+        }
 
         // Reset UI
         setIsRecording(false)
