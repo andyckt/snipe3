@@ -2,9 +2,14 @@
 
 import type React from "react"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useCallback } from "react"
 
-export function useRecording(streamRef: React.RefObject<MediaStream | null>) {
+interface UseRecordingProps {
+  streamRef: React.RefObject<MediaStream | null>
+  getTranscriptForExport?: () => string
+}
+
+export function useRecording({ streamRef, getTranscriptForExport }: UseRecordingProps) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<Blob[]>([])
   const [isRecording, setIsRecording] = useState(false)
@@ -76,6 +81,27 @@ export function useRecording(streamRef: React.RefObject<MediaStream | null>) {
           document.body.removeChild(a)
           window.URL.revokeObjectURL(url)
         }, 100)
+        
+        // Export transcript if available
+        if (getTranscriptForExport) {
+          const transcript = getTranscriptForExport()
+          if (transcript) {
+            const transcriptBlob = new Blob([transcript], { type: 'text/plain' })
+            const transcriptUrl = URL.createObjectURL(transcriptBlob)
+            const transcriptLink = document.createElement('a')
+            transcriptLink.style.display = 'none'
+            transcriptLink.href = transcriptUrl
+            transcriptLink.download = 'snipe-transcription.txt'
+            document.body.appendChild(transcriptLink)
+            transcriptLink.click()
+            
+            // Clean up transcript download
+            setTimeout(() => {
+              document.body.removeChild(transcriptLink)
+              window.URL.revokeObjectURL(transcriptUrl)
+            }, 100)
+          }
+        }
 
         // Reset UI
         setIsRecording(false)
