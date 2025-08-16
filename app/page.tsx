@@ -7,9 +7,9 @@ import { useRecording } from "@/hooks/use-recording"
 import { Button } from "@/components/ui/button"
 
 export default function CameraRecorder() {
-  // For now, we'll set a fixed number of recordings (2)
-  // This could be made configurable via props or state in the future
-  const TOTAL_RECORDINGS = 2
+  // Set the desired number of recordings here
+  // Change this value to adjust how many recordings the user will make
+  const TOTAL_RECORDINGS = 3
   
   const { videoRef, streamRef, hasPermission, showPermissionButton, requestPermissions } = useCamera()
 
