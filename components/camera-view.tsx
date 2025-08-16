@@ -1,6 +1,6 @@
 import type React from "react"
 interface CameraViewProps {
-  videoRef: React.RefObject<HTMLVideoElement>
+  videoRef: React.RefObject<HTMLVideoElement | null>
   countdown: number | null
 }
 

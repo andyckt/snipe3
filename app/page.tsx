@@ -4,6 +4,7 @@ import { CameraView } from "@/components/camera-view"
 import { CameraControls } from "@/components/camera-controls"
 import { useCamera } from "@/hooks/use-camera"
 import { useRecording } from "@/hooks/use-recording"
+import { Button } from "@/components/ui/button"
 
 export default function CameraRecorder() {
   // For now, we'll set a fixed number of recordings (2)
@@ -19,6 +20,7 @@ export default function CameraRecorder() {
     currentRecordingIndex,
     totalRecordings,
     isLastRecording,
+    isSessionComplete,
     startRecording, 
     nextRecording,
     completeSession
@@ -30,6 +32,20 @@ export default function CameraRecorder() {
       return
     }
     await startRecording()
+  }
+
+  // Thank you screen after all recordings are completed
+  if (isSessionComplete) {
+    return (
+      <div className="flex flex-col h-screen w-full overflow-hidden bg-white md:bg-gray-100 md:items-center md:justify-center">
+        <div className="flex flex-col h-full w-full bg-white md:max-w-sm md:h-screen p-8 items-center justify-center text-center">
+          <h1 className="text-3xl font-bold mb-4">Thank You!</h1>
+          <p className="text-lg">
+            All {totalRecordings} recordings have been completed and downloaded.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (

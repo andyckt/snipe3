@@ -38,7 +38,13 @@ export function CameraControls({
             {isRecording || isCountingDown ? (
               <span>Recording {currentRecordingIndex + 1} of {totalRecordings}</span>
             ) : (
-              <span>{currentRecordingIndex === 0 ? 'Ready to record' : `${currentRecordingIndex} of ${totalRecordings} recordings complete`}</span>
+              <span>
+                {currentRecordingIndex === 0 
+                  ? 'Ready to record' 
+                  : currentRecordingIndex === totalRecordings 
+                    ? 'All recordings complete' 
+                    : `${currentRecordingIndex} of ${totalRecordings} recordings complete`}
+              </span>
             )}
           </div>
         )}
