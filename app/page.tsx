@@ -4,6 +4,12 @@ import { useState } from "react"
 import { CameraView } from "@/components/camera-view"
 import { CameraControls } from "@/components/camera-controls"
 import { SettingsScreen, AudioLanguage } from "@/components/settings-screen"
+
+// Import TextInput type from settings-screen
+interface TextInput {
+  id: string;
+  value: string;
+}
 import { useCamera } from "@/hooks/use-camera"
 import { useRecording } from "@/hooks/use-recording"
 import { Button } from "@/components/ui/button"
@@ -16,6 +22,7 @@ export default function CameraRecorder() {
   const [appState, setAppState] = useState<AppState>("settings")
   const [numRecordings, setNumRecordings] = useState(3)
   const [audioLanguage, setAudioLanguage] = useState<AudioLanguage>("english")
+  const [textInputs, setTextInputs] = useState<TextInput[]>([{ id: "default", value: "" }])
   
   const { videoRef, streamRef, hasPermission, showPermissionButton, requestPermissions, stopCamera } = useCamera()
 
@@ -33,10 +40,14 @@ export default function CameraRecorder() {
   } = useRecording(streamRef, { totalRecordings: numRecordings, audioLanguage })
 
   // Handle launching the recorder with selected settings
-  const handleLaunch = (selectedNumRecordings: number, selectedLanguage: AudioLanguage) => {
+  const handleLaunch = (selectedNumRecordings: number, selectedLanguage: AudioLanguage, selectedTextInputs: TextInput[]) => {
     setNumRecordings(selectedNumRecordings)
     setAudioLanguage(selectedLanguage)
+    setTextInputs(selectedTextInputs)
     setAppState("recording")
+    
+    // Log the text inputs for now (we'll use them properly later)
+    console.log("Text inputs:", selectedTextInputs)
   }
 
   // Handle starting a recording
