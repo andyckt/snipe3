@@ -6,6 +6,7 @@ interface CameraControlsProps {
   showPermissionButton: boolean
   hasPermission: boolean
   isRecording: boolean
+  isCountingDown: boolean
   onRequestPermissions: () => void
   onStartRecording: () => void
   onStopRecording: () => void
@@ -15,6 +16,7 @@ export function CameraControls({
   showPermissionButton,
   hasPermission,
   isRecording,
+  isCountingDown,
   onRequestPermissions,
   onStartRecording,
   onStopRecording,
@@ -31,7 +33,7 @@ export function CameraControls({
           </Button>
         )}
 
-        {hasPermission && !isRecording && (
+        {hasPermission && !isRecording && !isCountingDown && (
           <Button
             onClick={onStartRecording}
             className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-full min-w-[120px]"

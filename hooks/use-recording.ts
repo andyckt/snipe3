@@ -8,14 +8,17 @@ export function useRecording(streamRef: React.RefObject<MediaStream | null>) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<Blob[]>([])
   const [isRecording, setIsRecording] = useState(false)
+  const [isCountingDown, setIsCountingDown] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
 
   const runCountdown = async () => {
+    setIsCountingDown(true)
     for (let i = 3; i >= 1; i--) {
       setCountdown(i)
       await new Promise((resolve) => setTimeout(resolve, 1000))
     }
     setCountdown(null)
+    setIsCountingDown(false)
   }
 
   const startRecording = async () => {
@@ -98,6 +101,7 @@ export function useRecording(streamRef: React.RefObject<MediaStream | null>) {
 
   return {
     isRecording,
+    isCountingDown,
     countdown,
     startRecording,
     stopRecording,

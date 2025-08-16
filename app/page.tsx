@@ -8,7 +8,7 @@ import { useRecording } from "@/hooks/use-recording"
 export default function CameraRecorder() {
   const { videoRef, streamRef, hasPermission, showPermissionButton, requestPermissions } = useCamera()
 
-  const { isRecording, countdown, startRecording, stopRecording } = useRecording(streamRef)
+  const { isRecording, isCountingDown, countdown, startRecording, stopRecording } = useRecording(streamRef)
 
   const handleStartRecording = async () => {
     if (!hasPermission) {
@@ -27,6 +27,7 @@ export default function CameraRecorder() {
           showPermissionButton={showPermissionButton}
           hasPermission={hasPermission}
           isRecording={isRecording}
+          isCountingDown={isCountingDown}
           onRequestPermissions={requestPermissions}
           onStartRecording={handleStartRecording}
           onStopRecording={stopRecording}
