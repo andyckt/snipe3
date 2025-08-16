@@ -11,6 +11,11 @@ export function useCamera() {
   // Check permissions on mount
   useEffect(() => {
     checkPermissions()
+    
+    // Cleanup function to stop camera when component unmounts
+    return () => {
+      stopCamera()
+    }
   }, [])
 
   const checkPermissions = async () => {
@@ -33,8 +38,31 @@ export function useCamera() {
     }
   }
 
+  const stopCamera = () => {
+    // Stop all tracks in the stream
+    if (streamRef.current) {
+      const tracks = streamRef.current.getTracks()
+      tracks.forEach(track => {
+        track.stop()
+      })
+      streamRef.current = null
+    }
+    
+    // Clear video element
+    if (videoRef.current) {
+      videoRef.current.srcObject = null
+    }
+    
+    // Reset UI state
+    setHasPermission(false)
+    setShowPermissionButton(true)
+  }
+
   const setupCamera = async () => {
     try {
+      // First stop any existing camera stream
+      stopCamera()
+      
       const constraints = {
         video: {
           facingMode: "user", // Front camera for selfies
@@ -43,7 +71,7 @@ export function useCamera() {
       }
 
       // Detect iOS device
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
 
       // iOS Safari sometimes needs specific audio constraints
       if (isIOS) {
@@ -52,7 +80,7 @@ export function useCamera() {
           echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: false,
-        } as MediaTrackConstraints
+        } as unknown as boolean
       }
 
       let stream: MediaStream
@@ -92,5 +120,6 @@ export function useCamera() {
     hasPermission,
     showPermissionButton,
     requestPermissions,
+    stopCamera,
   }
 }

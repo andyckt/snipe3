@@ -16,7 +16,7 @@ export default function CameraRecorder() {
   const [appState, setAppState] = useState<AppState>("settings")
   const [numRecordings, setNumRecordings] = useState(3)
   
-  const { videoRef, streamRef, hasPermission, showPermissionButton, requestPermissions } = useCamera()
+  const { videoRef, streamRef, hasPermission, showPermissionButton, requestPermissions, stopCamera } = useCamera()
 
   const { 
     isRecording, 
@@ -48,8 +48,9 @@ export default function CameraRecorder() {
 
   // Handle session completion
   if (isSessionComplete) {
-    // Return to settings after session is complete
+    // Stop the camera and transition to completed state
     setTimeout(() => {
+      stopCamera() // Stop the camera when recordings are complete
       setAppState("completed")
     }, 100)
   }
@@ -70,15 +71,9 @@ export default function CameraRecorder() {
       <div className="flex flex-col h-screen w-full overflow-hidden bg-white md:bg-gray-100 md:items-center md:justify-center">
         <div className="flex flex-col h-full w-full bg-white md:max-w-sm md:h-screen p-8 items-center justify-center text-center">
           <h1 className="text-3xl font-bold mb-4">Thank You!</h1>
-          <p className="text-lg mb-8">
+          <p className="text-lg">
             All {numRecordings} recordings have been completed and downloaded.
           </p>
-          <Button 
-            onClick={() => setAppState("settings")}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-full"
-          >
-            Return to Settings
-          </Button>
         </div>
       </div>
     )
