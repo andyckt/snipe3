@@ -40,7 +40,7 @@ export function CameraControls({
             ) : (
               <span>
                 {currentRecordingIndex === 0 
-                  ? 'Ready to record' 
+                  ? '' 
                   : currentRecordingIndex === totalRecordings 
                     ? 'All recordings complete' 
                     : `${currentRecordingIndex} of ${totalRecordings} recordings complete`}

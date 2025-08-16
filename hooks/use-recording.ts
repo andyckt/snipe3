@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { preloadAudio, playAudio } from "@/lib/audio"
 
 interface RecordingOptions {
   totalRecordings?: number
@@ -18,6 +19,13 @@ export function useRecording(streamRef: React.RefObject<MediaStream | null>, opt
   const [countdown, setCountdown] = useState<number | null>(null)
   const [currentRecordingIndex, setCurrentRecordingIndex] = useState(0)
   const [isSessionComplete, setIsSessionComplete] = useState(false)
+  const startAudioRef = useRef<HTMLAudioElement | null>(null)
+  const isFirstRecordingRef = useRef(true) // Track if this is the first recording in the session
+  
+  // Preload the starter audio
+  useEffect(() => {
+    startAudioRef.current = preloadAudio('/audio/englishstarter.mp3')
+  }, [])
 
   const runCountdown = async () => {
     setIsCountingDown(true)
@@ -65,11 +73,20 @@ export function useRecording(streamRef: React.RefObject<MediaStream | null>, opt
     if (isSessionComplete) {
       setCurrentRecordingIndex(0)
       setIsSessionComplete(false)
+      isFirstRecordingRef.current = true // Reset first recording flag
     }
     
     // Run countdown unless skipped
     if (!skipCountdown) {
       await runCountdown()
+    }
+
+    // Play starter audio if this is the first recording of the session
+    if (isFirstRecordingRef.current) {
+      playAudio('/audio/englishstarter.mp3').catch(err => {
+        console.error('Failed to play starter audio:', err)
+      })
+      isFirstRecordingRef.current = false // Mark that we've played the audio
     }
 
     // Setup media recorder
