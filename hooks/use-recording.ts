@@ -4,12 +4,20 @@ import type React from "react"
 
 import { useRef, useState } from "react"
 
-export function useRecording(streamRef: React.RefObject<MediaStream | null>) {
+interface RecordingOptions {
+  totalRecordings?: number
+}
+
+export function useRecording(streamRef: React.RefObject<MediaStream | null>, options: RecordingOptions = {}) {
+  const { totalRecordings = 1 } = options
+  
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<Blob[]>([])
   const [isRecording, setIsRecording] = useState(false)
   const [isCountingDown, setIsCountingDown] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
+  const [currentRecordingIndex, setCurrentRecordingIndex] = useState(0)
+  const [isSessionComplete, setIsSessionComplete] = useState(false)
 
   const runCountdown = async () => {
     setIsCountingDown(true)
@@ -21,13 +29,50 @@ export function useRecording(streamRef: React.RefObject<MediaStream | null>) {
     setIsCountingDown(false)
   }
 
-  const startRecording = async () => {
-    // Start countdown
-    await runCountdown()
+  const downloadRecording = () => {
+    if (recordedChunksRef.current.length === 0) return
+
+    const mediaRecorder = mediaRecorderRef.current
+    if (!mediaRecorder) return
+
+    const mimeType = mediaRecorder.mimeType
+    const fileExtension = mimeType.includes("mp4") ? "mp4" : "webm"
+    
+    // Create a blob from the recorded chunks
+    const blob = new Blob(recordedChunksRef.current, { type: mimeType })
+    
+    // Create a download link for the recorded video
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.style.display = "none"
+    a.href = url
+    a.download = `camera-recording-${currentRecordingIndex + 1}.${fileExtension}`
+    document.body.appendChild(a)
+    a.click()
+
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    }, 100)
+    
+    // Clear chunks for next recording
+    recordedChunksRef.current = []
+  }
+
+  const startRecording = async (skipCountdown = false) => {
+    // Reset if starting a new session
+    if (isSessionComplete) {
+      setCurrentRecordingIndex(0)
+      setIsSessionComplete(false)
+    }
+    
+    // Run countdown unless skipped
+    if (!skipCountdown) {
+      await runCountdown()
+    }
 
     // Setup media recorder
-    recordedChunksRef.current = []
-
     try {
       let mimeType = "video/webm"
 
@@ -59,28 +104,7 @@ export function useRecording(streamRef: React.RefObject<MediaStream | null>) {
       }
 
       mediaRecorder.onstop = () => {
-        const mimeType = mediaRecorder.mimeType
-        const fileExtension = mimeType.includes("mp4") ? "mp4" : "webm"
-
-        // Create a blob from the recorded chunks
-        const blob = new Blob(recordedChunksRef.current, { type: mimeType })
-
-        // Create a download link for the recorded video
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement("a")
-        a.style.display = "none"
-        a.href = url
-        a.download = `camera-recording.${fileExtension}`
-        document.body.appendChild(a)
-        a.click()
-
-        // Clean up
-        setTimeout(() => {
-          document.body.removeChild(a)
-          window.URL.revokeObjectURL(url)
-        }, 100)
-
-        // Reset UI
+        downloadRecording()
         setIsRecording(false)
       }
 
@@ -98,12 +122,42 @@ export function useRecording(streamRef: React.RefObject<MediaStream | null>) {
       mediaRecorderRef.current.stop()
     }
   }
+  
+  const nextRecording = async () => {
+    // Stop the current recording
+    stopRecording()
+    
+    // Move to the next recording index
+    const nextIndex = currentRecordingIndex + 1
+    setCurrentRecordingIndex(nextIndex)
+    
+    // Check if we've reached the end of the session
+    if (nextIndex >= totalRecordings) {
+      setIsSessionComplete(true)
+    } else {
+      // Start the next recording with a small delay to ensure the previous one is processed
+      setTimeout(() => {
+        startRecording(false) // Start with countdown
+      }, 500)
+    }
+  }
+  
+  const completeSession = () => {
+    stopRecording()
+    setIsSessionComplete(true)
+  }
 
   return {
     isRecording,
     isCountingDown,
     countdown,
+    currentRecordingIndex,
+    totalRecordings,
+    isLastRecording: currentRecordingIndex === totalRecordings - 1,
+    isSessionComplete,
     startRecording,
     stopRecording,
+    nextRecording,
+    completeSession
   }
 }

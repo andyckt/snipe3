@@ -6,9 +6,23 @@ import { useCamera } from "@/hooks/use-camera"
 import { useRecording } from "@/hooks/use-recording"
 
 export default function CameraRecorder() {
+  // For now, we'll set a fixed number of recordings (2)
+  // This could be made configurable via props or state in the future
+  const TOTAL_RECORDINGS = 2
+  
   const { videoRef, streamRef, hasPermission, showPermissionButton, requestPermissions } = useCamera()
 
-  const { isRecording, isCountingDown, countdown, startRecording, stopRecording } = useRecording(streamRef)
+  const { 
+    isRecording, 
+    isCountingDown, 
+    countdown, 
+    currentRecordingIndex,
+    totalRecordings,
+    isLastRecording,
+    startRecording, 
+    nextRecording,
+    completeSession
+  } = useRecording(streamRef, { totalRecordings: TOTAL_RECORDINGS })
 
   const handleStartRecording = async () => {
     if (!hasPermission) {
@@ -28,9 +42,13 @@ export default function CameraRecorder() {
           hasPermission={hasPermission}
           isRecording={isRecording}
           isCountingDown={isCountingDown}
+          currentRecordingIndex={currentRecordingIndex}
+          totalRecordings={totalRecordings}
+          isLastRecording={isLastRecording}
           onRequestPermissions={requestPermissions}
           onStartRecording={handleStartRecording}
-          onStopRecording={stopRecording}
+          onNextRecording={nextRecording}
+          onCompleteSession={completeSession}
         />
       </div>
     </div>
