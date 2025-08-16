@@ -41,13 +41,15 @@ export default function CameraRecorder() {
 
   // Handle launching the recorder with selected settings
   const handleLaunch = (selectedNumRecordings: number, selectedLanguage: AudioLanguage, selectedTextInputs: TextInput[]) => {
-    setNumRecordings(selectedNumRecordings)
+    // The number of recordings is now determined by the number of text inputs
+    setNumRecordings(selectedTextInputs.length)
     setAudioLanguage(selectedLanguage)
     setTextInputs(selectedTextInputs)
     setAppState("recording")
     
     // Log the text inputs for now (we'll use them properly later)
     console.log("Text inputs:", selectedTextInputs)
+    console.log("Number of recordings:", selectedTextInputs.length)
   }
 
   // Handle starting a recording
