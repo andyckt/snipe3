@@ -7,10 +7,11 @@ import { preloadAudio, playAudio } from "@/lib/audio"
 
 interface RecordingOptions {
   totalRecordings?: number
+  audioLanguage?: "english" | "chinese"
 }
 
 export function useRecording(streamRef: React.RefObject<MediaStream | null>, options: RecordingOptions = {}) {
-  const { totalRecordings = 1 } = options
+  const { totalRecordings = 1, audioLanguage = "english" } = options
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<Blob[]>([])
@@ -22,10 +23,17 @@ export function useRecording(streamRef: React.RefObject<MediaStream | null>, opt
   const startAudioRef = useRef<HTMLAudioElement | null>(null)
   const isFirstRecordingRef = useRef(true) // Track if this is the first recording in the session
   
+  // Get the audio file path based on language
+  const getAudioPath = () => {
+    return audioLanguage === "english" 
+      ? '/audio/englishstarter.mp3' 
+      : '/audio/mandarinstarter.mp3'
+  }
+  
   // Preload the starter audio
   useEffect(() => {
-    startAudioRef.current = preloadAudio('/audio/englishstarter.mp3')
-  }, [])
+    startAudioRef.current = preloadAudio(getAudioPath())
+  }, [audioLanguage])
 
   const runCountdown = async () => {
     setIsCountingDown(true)
@@ -83,7 +91,7 @@ export function useRecording(streamRef: React.RefObject<MediaStream | null>, opt
 
     // Play starter audio if this is the first recording of the session
     if (isFirstRecordingRef.current) {
-      playAudio('/audio/englishstarter.mp3').catch(err => {
+      playAudio(getAudioPath()).catch(err => {
         console.error('Failed to play starter audio:', err)
       })
       isFirstRecordingRef.current = false // Mark that we've played the audio

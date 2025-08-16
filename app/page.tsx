@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { CameraView } from "@/components/camera-view"
 import { CameraControls } from "@/components/camera-controls"
-import { SettingsScreen } from "@/components/settings-screen"
+import { SettingsScreen, AudioLanguage } from "@/components/settings-screen"
 import { useCamera } from "@/hooks/use-camera"
 import { useRecording } from "@/hooks/use-recording"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,7 @@ export default function CameraRecorder() {
   // State management
   const [appState, setAppState] = useState<AppState>("settings")
   const [numRecordings, setNumRecordings] = useState(3)
+  const [audioLanguage, setAudioLanguage] = useState<AudioLanguage>("english")
   
   const { videoRef, streamRef, hasPermission, showPermissionButton, requestPermissions, stopCamera } = useCamera()
 
@@ -29,11 +30,12 @@ export default function CameraRecorder() {
     startRecording, 
     nextRecording,
     completeSession
-  } = useRecording(streamRef, { totalRecordings: numRecordings })
+  } = useRecording(streamRef, { totalRecordings: numRecordings, audioLanguage })
 
-  // Handle launching the recorder with selected number of recordings
-  const handleLaunch = (selectedNumRecordings: number) => {
+  // Handle launching the recorder with selected settings
+  const handleLaunch = (selectedNumRecordings: number, selectedLanguage: AudioLanguage) => {
     setNumRecordings(selectedNumRecordings)
+    setAudioLanguage(selectedLanguage)
     setAppState("recording")
   }
 

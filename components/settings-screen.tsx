@@ -3,12 +3,15 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 
+export type AudioLanguage = "english" | "chinese"
+
 interface SettingsScreenProps {
-  onLaunch: (numRecordings: number) => void
+  onLaunch: (numRecordings: number, language: AudioLanguage) => void
 }
 
 export function SettingsScreen({ onLaunch }: SettingsScreenProps) {
   const [numRecordings, setNumRecordings] = useState(2)
+  const [language, setLanguage] = useState<AudioLanguage>("english")
   
   const handleIncrease = () => {
     setNumRecordings(prev => Math.min(prev + 1, 10)) // Maximum 10 recordings
@@ -22,7 +25,7 @@ export function SettingsScreen({ onLaunch }: SettingsScreenProps) {
     <div className="flex flex-col h-full w-full bg-white p-8 items-center justify-center">
       <h1 className="text-3xl font-bold mb-8">Camera Recorder Settings</h1>
       
-      <div className="flex flex-col items-center mb-12">
+      <div className="flex flex-col items-center mb-8">
         <h2 className="text-xl font-semibold mb-6">Number of Recordings</h2>
         
         <div className="flex items-center gap-6">
@@ -46,8 +49,36 @@ export function SettingsScreen({ onLaunch }: SettingsScreenProps) {
         </div>
       </div>
       
+      <div className="flex flex-col items-center mb-12">
+        <h2 className="text-xl font-semibold mb-6">Audio Language</h2>
+        
+        <div className="flex gap-4">
+          <Button
+            onClick={() => setLanguage("english")}
+            className={`px-6 py-2 rounded-full ${
+              language === "english" 
+                ? "bg-blue-500 text-white" 
+                : "bg-gray-200 text-black hover:bg-gray-300"
+            }`}
+          >
+            English
+          </Button>
+          
+          <Button
+            onClick={() => setLanguage("chinese")}
+            className={`px-6 py-2 rounded-full ${
+              language === "chinese" 
+                ? "bg-blue-500 text-white" 
+                : "bg-gray-200 text-black hover:bg-gray-300"
+            }`}
+          >
+            Mandarin
+          </Button>
+        </div>
+      </div>
+      
       <Button 
-        onClick={() => onLaunch(numRecordings)}
+        onClick={() => onLaunch(numRecordings, language)}
         className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-4 text-xl rounded-full"
       >
         Launch Recorder
