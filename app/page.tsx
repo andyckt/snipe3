@@ -23,6 +23,7 @@ export default function CameraRecorder() {
   const [numRecordings, setNumRecordings] = useState(3)
   const [audioLanguage, setAudioLanguage] = useState<AudioLanguage>("english")
   const [textInputs, setTextInputs] = useState<TextInput[]>([{ id: "default", value: "" }])
+  const [mode, setMode] = useState<"question" | "conversation">("question")
   
   const { videoRef, streamRef, hasPermission, showPermissionButton, requestPermissions, stopCamera } = useCamera()
 
@@ -37,19 +38,21 @@ export default function CameraRecorder() {
     startRecording, 
     nextRecording,
     completeSession
-  } = useRecording(streamRef, { totalRecordings: numRecordings, audioLanguage })
+  } = useRecording(streamRef, { totalRecordings: numRecordings, audioLanguage, mode })
 
   // Handle launching the recorder with selected settings
-  const handleLaunch = (selectedNumRecordings: number, selectedLanguage: AudioLanguage, selectedTextInputs: TextInput[]) => {
+  const handleLaunch = (selectedNumRecordings: number, selectedLanguage: AudioLanguage, selectedTextInputs: TextInput[], selectedMode: "question" | "conversation") => {
     // The number of recordings is now determined by the number of text inputs
     setNumRecordings(selectedTextInputs.length)
     setAudioLanguage(selectedLanguage)
     setTextInputs(selectedTextInputs)
+    setMode(selectedMode)
     setAppState("recording")
     
     // Log the text inputs for now (we'll use them properly later)
     console.log("Text inputs:", selectedTextInputs)
     console.log("Number of recordings:", selectedTextInputs.length)
+    console.log("Mode:", selectedMode)
   }
 
   // Handle starting a recording

@@ -14,7 +14,7 @@ interface TextInput {
 }
 
 interface SettingsScreenProps {
-  onLaunch: (numRecordings: number, language: AudioLanguage, textInputs: TextInput[]) => void
+  onLaunch: (numRecordings: number, language: AudioLanguage, textInputs: TextInput[], mode: "question" | "conversation") => void
 }
 
 export function SettingsScreen({ onLaunch }: SettingsScreenProps) {
@@ -122,14 +122,21 @@ export function SettingsScreen({ onLaunch }: SettingsScreenProps) {
           </div>
         </TabsContent>
         
-        <TabsContent value="conversation" className="w-full">
-          {/* Completely empty conversation tab */}
+        <TabsContent value="conversation" className="w-full flex flex-col items-center justify-center">
+          <div className="flex-1 w-full flex items-center justify-center mb-8">
+            <Button 
+              onClick={() => onLaunch(1, language, [{ id: "conversation", value: "" }], "conversation")}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-4 text-xl rounded-full"
+            >
+              Launch Recorder
+            </Button>
+          </div>
         </TabsContent>
       </Tabs>
       
       {activeTab === "question" && (
         <Button 
-          onClick={() => onLaunch(textInputs.length, language, textInputs)}
+          onClick={() => onLaunch(textInputs.length, language, textInputs, "question")}
           className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-4 text-xl rounded-full"
         >
           Launch Recorder

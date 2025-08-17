@@ -8,10 +8,11 @@ import { preloadAudio, playAudio } from "@/lib/audio"
 interface RecordingOptions {
   totalRecordings?: number
   audioLanguage?: "english" | "chinese"
+  mode?: "question" | "conversation" // New option to specify the mode
 }
 
 export function useRecording(streamRef: React.RefObject<MediaStream | null>, options: RecordingOptions = {}) {
-  const { totalRecordings = 1, audioLanguage = "english" } = options
+  const { totalRecordings = 1, audioLanguage = "english", mode = "question" } = options
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<Blob[]>([])
@@ -89,12 +90,15 @@ export function useRecording(streamRef: React.RefObject<MediaStream | null>, opt
       await runCountdown()
     }
 
-    // Play starter audio if this is the first recording of the session
-    if (isFirstRecordingRef.current) {
+    // Play starter audio if this is the first recording of the session and we're in question mode
+    if (isFirstRecordingRef.current && mode === "question") {
       playAudio(getAudioPath()).catch(err => {
         console.error('Failed to play starter audio:', err)
       })
       isFirstRecordingRef.current = false // Mark that we've played the audio
+    } else {
+      // In conversation mode or not first recording, just mark as played without audio
+      isFirstRecordingRef.current = false
     }
 
     // Setup media recorder
