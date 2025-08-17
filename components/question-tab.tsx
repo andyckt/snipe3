@@ -28,7 +28,8 @@ export type AudioLanguage = "english" | "mandarin"
 export interface TextInput {
   id: string;
   value: string;
-  audioUrl?: string;
+  audioUrl?: string;  // S3 presigned URL
+  audioKey?: string;  // S3 key for the audio file
   isGenerating?: boolean;
   // No need to explicitly store order as the array index will determine order
 }
@@ -130,7 +131,7 @@ function SortableTextInput({
 
 export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTabProps) {
   const [textInputs, setTextInputs] = useState<TextInput[]>([
-    { id: crypto.randomUUID(), value: '', audioUrl: undefined, isGenerating: false }
+    { id: crypto.randomUUID(), value: '', audioUrl: undefined, audioKey: undefined, isGenerating: false }
   ])
   
   // Set up sensors for drag and drop
@@ -152,6 +153,7 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
       id: crypto.randomUUID(), 
       value: '',
       audioUrl: undefined,
+      audioKey: undefined,
       isGenerating: false
     }])
   }
@@ -180,15 +182,19 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
       
       // Map the AudioLanguage type to the type expected by textToSpeechUrl
       const apiLanguage = language === "english" ? "english" : "mandarin"
+      console.log(`Generating speech for language: ${language}, mapped to API language: ${apiLanguage}`)
       
-      // Generate speech with the selected language
-      const audioUrl = await textToSpeechUrl(text, apiLanguage)
+      // Generate speech with the selected language and upload to S3
+      const { url, key } = await textToSpeechUrl(text, apiLanguage)
       
-      // Update the state with the audio URL
+      console.log(`Audio uploaded to S3. Key: ${key}, URL: ${url}`)
+      
+      // Update the state with the audio URL and S3 key
       setTextInputs(prev => 
         prev.map(input => input.id === id ? { 
           ...input, 
-          audioUrl, 
+          audioUrl: url,
+          audioKey: key,
           isGenerating: false 
         } : input)
       )

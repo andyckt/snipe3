@@ -5,6 +5,8 @@
  * Based on the ElevenLabs API documentation
  */
 
+import { uploadAudioToS3, getAudioUrl } from './s3-service'
+
 // Initialize the ElevenLabs client with the API key from environment variables
 const ELEVENLABS_API_KEY = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '';
 const API_BASE_URL = 'https://api.elevenlabs.io/v1';
@@ -76,21 +78,31 @@ export const textToSpeech = async (
 };
 
 /**
- * Converts text to speech and returns an audio URL
+ * Converts text to speech, uploads to S3, and returns a presigned URL
  * @param text - The text to convert to speech
  * @param language - Optional language selection ('english' or 'mandarin')
- * @returns Promise with the audio URL
+ * @returns Promise with the S3 presigned URL and the S3 key
  */
 export const textToSpeechUrl = async (
   text: string,
   language: 'english' | 'mandarin' = 'english'
-): Promise<string> => {
+): Promise<{ url: string, key: string }> => {
   try {
+    // Convert text to speech
     const audioBlob = await textToSpeech(text, language);
-    const url = URL.createObjectURL(audioBlob);
-    return url;
+    
+    // Create a prefix based on language for better organization
+    const prefix = `audio/${language}/`;
+    
+    // Upload to S3
+    const s3Key = await uploadAudioToS3(audioBlob, prefix);
+    
+    // Generate a presigned URL
+    const url = await getAudioUrl(s3Key);
+    
+    return { url, key: s3Key };
   } catch (error) {
-    console.error('Error converting text to speech URL:', error);
+    console.error('Error converting text to speech and uploading to S3:', error);
     throw error;
   }
 };
