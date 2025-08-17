@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { PlusCircle, MinusCircle, Volume2, Loader2, GripVertical } from "lucide-react"
-import { textToSpeechUrl, playAudio } from "@/lib/elevenlabs-browser"
+import { textToSpeechAndUpload, playAudio, getPresignedUrl } from "@/lib/api-service"
 import {
   DndContext,
   closestCenter,
@@ -45,7 +45,7 @@ interface SortableTextInputProps {
   input: TextInput;
   onTextChange: (id: string, value: string) => void;
   onGenerateSpeech: (id: string, text: string) => void;
-  onPlayAudio: (audioUrl?: string) => void;
+  onPlayAudio: (audioUrl?: string, audioKey?: string) => void;
   onRemove: (id: string) => void;
   disableRemove: boolean;
 }
@@ -97,7 +97,7 @@ function SortableTextInput({
       
       <div className="flex gap-1">
         <Button
-          onClick={() => input.audioUrl ? onPlayAudio(input.audioUrl) : onGenerateSpeech(input.id, input.value)}
+          onClick={() => input.audioUrl ? onPlayAudio(input.audioUrl, input.audioKey) : onGenerateSpeech(input.id, input.value)}
           disabled={!input.value.trim() || input.isGenerating}
           variant="ghost"
           size="icon"
@@ -180,12 +180,12 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
         prev.map(input => input.id === id ? { ...input, isGenerating: true } : input)
       )
       
-      // Map the AudioLanguage type to the type expected by textToSpeechUrl
+      // Map the AudioLanguage type to the type expected by API
       const apiLanguage = language === "english" ? "english" : "mandarin"
       console.log(`Generating speech for language: ${language}, mapped to API language: ${apiLanguage}`)
       
-      // Generate speech with the selected language and upload to S3
-      const { url, key } = await textToSpeechUrl(text, apiLanguage)
+      // Generate speech with the selected language and upload to S3 using our API service
+      const { url, key } = await textToSpeechAndUpload(text, apiLanguage)
       
       console.log(`Audio uploaded to S3. Key: ${key}, URL: ${url}`)
       
@@ -211,9 +211,30 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
     }
   }
   
-  const handlePlayAudio = (audioUrl?: string) => {
+  const handlePlayAudio = async (audioUrl?: string, audioKey?: string) => {
     if (!audioUrl) return
-    playAudio(audioUrl)
+    
+    try {
+      // If we have a key, get a fresh presigned URL (in case the old one expired)
+      let urlToPlay = audioUrl
+      if (audioKey) {
+        urlToPlay = await getPresignedUrl(audioKey)
+        
+        // Update the stored URL in state
+        setTextInputs(prev => 
+          prev.map(input => input.audioKey === audioKey ? { 
+            ...input, 
+            audioUrl: urlToPlay
+          } : input)
+        )
+      }
+      
+      // Play the audio
+      playAudio(urlToPlay)
+    } catch (error) {
+      console.error('Error playing audio:', error)
+      alert('Failed to play audio. Please try again.')
+    }
   }
   
   // Handle the end of a drag operation

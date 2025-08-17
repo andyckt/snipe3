@@ -1,0 +1,14 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "pnpm build",
+  "devCommand": "pnpm dev",
+  "installCommand": "pnpm install",
+  "regions": ["iad1"],
+  "env": {
+    "ELEVENLABS_API_KEY": "@elevenlabs_api_key",
+    "AWS_REGION": "@aws_region",
+    "AWS_S3_BUCKET": "@aws_s3_bucket",
+    "AWS_ACCESS_KEY_ID": "@aws_access_key_id",
+    "AWS_SECRET_ACCESS_KEY": "@aws_secret_access_key"
+  }
+}
