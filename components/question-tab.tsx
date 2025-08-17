@@ -3,13 +3,16 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { PlusCircle, MinusCircle } from "lucide-react"
+import { PlusCircle, MinusCircle, Volume2, Loader2 } from "lucide-react"
+import { textToSpeechUrl, playAudio } from "@/lib/elevenlabs-browser"
 
 export type AudioLanguage = "english" | "chinese"
 
 export interface TextInput {
   id: string;
   value: string;
+  audioUrl?: string;
+  isGenerating?: boolean;
 }
 
 interface QuestionTabProps {
@@ -19,11 +22,16 @@ interface QuestionTabProps {
 export function QuestionTab({ onLaunch }: QuestionTabProps) {
   const [language, setLanguage] = useState<AudioLanguage>("english")
   const [textInputs, setTextInputs] = useState<TextInput[]>([
-    { id: crypto.randomUUID(), value: '' }
+    { id: crypto.randomUUID(), value: '', audioUrl: undefined, isGenerating: false }
   ])
   
   const handleAddTextInput = () => {
-    setTextInputs(prev => [...prev, { id: crypto.randomUUID(), value: '' }])
+    setTextInputs(prev => [...prev, { 
+      id: crypto.randomUUID(), 
+      value: '',
+      audioUrl: undefined,
+      isGenerating: false
+    }])
   }
   
   const handleRemoveTextInput = (id: string) => {
@@ -37,6 +45,44 @@ export function QuestionTab({ onLaunch }: QuestionTabProps) {
     setTextInputs(prev => 
       prev.map(input => input.id === id ? { ...input, value } : input)
     )
+  }
+  
+  const generateSpeech = async (id: string, text: string) => {
+    if (!text.trim()) return
+    
+    try {
+      // Update the state to show loading
+      setTextInputs(prev => 
+        prev.map(input => input.id === id ? { ...input, isGenerating: true } : input)
+      )
+      
+      // Generate speech
+      const audioUrl = await textToSpeechUrl(text)
+      
+      // Update the state with the audio URL
+      setTextInputs(prev => 
+        prev.map(input => input.id === id ? { 
+          ...input, 
+          audioUrl, 
+          isGenerating: false 
+        } : input)
+      )
+    } catch (error) {
+      console.error('Error generating speech:', error)
+      
+      // Update the state to show error
+      setTextInputs(prev => 
+        prev.map(input => input.id === id ? { ...input, isGenerating: false } : input)
+      )
+      
+      // Show an alert
+      alert('Failed to generate speech. Please try again.')
+    }
+  }
+  
+  const handlePlayAudio = (audioUrl?: string) => {
+    if (!audioUrl) return
+    playAudio(audioUrl)
   }
   
   return (
@@ -69,6 +115,8 @@ export function QuestionTab({ onLaunch }: QuestionTabProps) {
         </div>
       </div>
       
+
+      
       <div className="flex flex-col items-center mb-12 w-full">
         <h2 className="text-xl font-semibold mb-2">Custom Text Fields</h2>
         <p className="text-sm text-gray-500 mb-6 text-center">Each text field will correspond to one recording. Add as many as you need.</p>
@@ -82,15 +130,35 @@ export function QuestionTab({ onLaunch }: QuestionTabProps) {
                 placeholder="Enter text..."
                 className="flex-1"
               />
-              <Button
-                onClick={() => handleRemoveTextInput(input.id)}
-                disabled={textInputs.length <= 1}
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50"
-              >
-                <MinusCircle size={20} />
-              </Button>
+              <div className="flex gap-1">
+                <Button
+                  onClick={() => input.audioUrl ? handlePlayAudio(input.audioUrl) : generateSpeech(input.id, input.value)}
+                  disabled={!input.value.trim() || input.isGenerating}
+                  variant="ghost"
+                  size="icon"
+                  className={`h-10 w-10 rounded-full ${
+                    input.audioUrl 
+                      ? "text-green-500 hover:text-green-700 hover:bg-green-50" 
+                      : "text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                  }`}
+                  title={input.audioUrl ? "Play generated audio" : "Generate audio"}
+                >
+                  {input.isGenerating ? (
+                    <Loader2 size={20} className="animate-spin" />
+                  ) : (
+                    <Volume2 size={20} />
+                  )}
+                </Button>
+                <Button
+                  onClick={() => handleRemoveTextInput(input.id)}
+                  disabled={textInputs.length <= 1}
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50"
+                >
+                  <MinusCircle size={20} />
+                </Button>
+              </div>
             </div>
           ))}
           

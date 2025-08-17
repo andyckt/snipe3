@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.9.0",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
@@ -42,6 +43,7 @@
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
     "date-fns": "4.1.0",
+    "dotenv": "^17.2.1",
     "embla-carousel-react": "8.5.1",
     "geist": "latest",
     "input-otp": "1.4.1",
@@ -57,6 +59,7 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "uuid": "^11.1.0",
     "vaul": "^0.9.9",
     "zod": "3.25.67"
   },
