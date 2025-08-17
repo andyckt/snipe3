@@ -49,8 +49,25 @@ export const textToSpeech = async (
 ): Promise<Blob> => {
   // Determine which voice ID to use
   const selectedVoiceId = voiceId || VOICE_IDS[language] || DEFAULT_VOICE_ID;
+  console.log(`Using voice ID: ${selectedVoiceId} for language: ${language}`);
   try {
     const url = `${API_BASE_URL}/text-to-speech/${selectedVoiceId}`;
+    
+    // Create the request body
+    const requestBody = {
+      text,
+      model_id: 'eleven_multilingual_v2',
+      output_format: 'mp3_44100_128', // Adding explicit output format as per documentation
+      voice_settings: VOICE_SETTINGS,
+    };
+    
+    // Log the voice settings being used
+    console.log('Using voice settings:', JSON.stringify(VOICE_SETTINGS));
+    console.log('- stability:', VOICE_SETTINGS.stability);
+    console.log('- similarity_boost:', VOICE_SETTINGS.similarity_boost);
+    console.log('- style:', VOICE_SETTINGS.style);
+    console.log('- use_speaker_boost:', VOICE_SETTINGS.use_speaker_boost);
+    console.log('- speed:', VOICE_SETTINGS.speed);
     
     const response = await fetch(url, {
       method: 'POST',
@@ -58,11 +75,7 @@ export const textToSpeech = async (
         'Content-Type': 'application/json',
         'xi-api-key': ELEVENLABS_API_KEY,
       },
-      body: JSON.stringify({
-        text,
-        model_id: 'eleven_multilingual_v2',
-        voice_settings: VOICE_SETTINGS,
-      }),
+      body: JSON.stringify(requestBody),
     });
     
     if (!response.ok) {
