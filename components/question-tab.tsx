@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { PlusCircle, MinusCircle, Volume2, Loader2 } from "lucide-react"
 import { textToSpeechUrl, playAudio } from "@/lib/elevenlabs-browser"
 
-export type AudioLanguage = "english" | "chinese"
+export type AudioLanguage = "english" | "mandarin"
 
 export interface TextInput {
   id: string;
@@ -56,8 +56,11 @@ export function QuestionTab({ onLaunch }: QuestionTabProps) {
         prev.map(input => input.id === id ? { ...input, isGenerating: true } : input)
       )
       
-      // Generate speech
-      const audioUrl = await textToSpeechUrl(text)
+      // Map the AudioLanguage type to the type expected by textToSpeechUrl
+      const apiLanguage = language === "english" ? "english" : "mandarin"
+      
+      // Generate speech with the selected language
+      const audioUrl = await textToSpeechUrl(text, apiLanguage)
       
       // Update the state with the audio URL
       setTextInputs(prev => 
@@ -103,9 +106,9 @@ export function QuestionTab({ onLaunch }: QuestionTabProps) {
           </Button>
           
           <Button
-            onClick={() => setLanguage("chinese")}
+            onClick={() => setLanguage("mandarin")}
             className={`px-6 py-2 rounded-full ${
-              language === "chinese" 
+              language === "mandarin" 
                 ? "bg-blue-500 text-white" 
                 : "bg-gray-200 text-black hover:bg-gray-300"
             }`}

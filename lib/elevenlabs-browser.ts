@@ -9,8 +9,14 @@
 const ELEVENLABS_API_KEY = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || '';
 const API_BASE_URL = 'https://api.elevenlabs.io/v1';
 
-// Default voice ID - Rachel voice
-const DEFAULT_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb';
+// Voice IDs for different languages
+const VOICE_IDS = {
+  english: '56AoDkrOh6qfVPDXZ7Pt',  // English voice ID
+  mandarin: '9lHjugDhwqoxA5MhX0az',  // Mandarin voice ID
+};
+
+// Default voice ID (fallback)
+const DEFAULT_VOICE_ID = VOICE_IDS.english;
 
 // Voice settings based on the documentation recommendations
 // Values normalized to the proper ranges (0.0 to 1.0)
@@ -30,15 +36,19 @@ if (!ELEVENLABS_API_KEY) {
 /**
  * Converts text to speech using ElevenLabs API
  * @param text - The text to convert to speech
- * @param voiceId - Optional voice ID to override the default
+ * @param language - Optional language selection ('english' or 'mandarin')
+ * @param voiceId - Optional voice ID to override the language-based selection
  * @returns Promise with the audio blob
  */
 export const textToSpeech = async (
   text: string,
-  voiceId: string = DEFAULT_VOICE_ID
+  language: 'english' | 'mandarin' = 'english',
+  voiceId?: string
 ): Promise<Blob> => {
+  // Determine which voice ID to use
+  const selectedVoiceId = voiceId || VOICE_IDS[language] || DEFAULT_VOICE_ID;
   try {
-    const url = `${API_BASE_URL}/text-to-speech/${voiceId}`;
+    const url = `${API_BASE_URL}/text-to-speech/${selectedVoiceId}`;
     
     const response = await fetch(url, {
       method: 'POST',
@@ -68,13 +78,15 @@ export const textToSpeech = async (
 /**
  * Converts text to speech and returns an audio URL
  * @param text - The text to convert to speech
+ * @param language - Optional language selection ('english' or 'mandarin')
  * @returns Promise with the audio URL
  */
 export const textToSpeechUrl = async (
-  text: string
+  text: string,
+  language: 'english' | 'mandarin' = 'english'
 ): Promise<string> => {
   try {
-    const audioBlob = await textToSpeech(text);
+    const audioBlob = await textToSpeech(text, language);
     const url = URL.createObjectURL(audioBlob);
     return url;
   } catch (error) {
