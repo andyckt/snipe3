@@ -3,15 +3,11 @@
 import { useState } from "react"
 import { CameraView } from "@/components/camera-view"
 import { CameraControls } from "@/components/camera-controls"
-import { SettingsScreen, AudioLanguage } from "@/components/settings-screen"
-
-// Import TextInput type from settings-screen
-interface TextInput {
-  id: string;
-  value: string;
-}
+import { SettingsScreen } from "@/components/settings-screen"
+import { AudioLanguage, TextInput } from "@/components/question-tab"
 import { useCamera } from "@/hooks/use-camera"
-import { useRecording } from "@/hooks/use-recording"
+import { useQuestionRecording } from "@/hooks/use-question-recording"
+import { useConversationRecording } from "@/hooks/use-conversation-recording"
 import { Button } from "@/components/ui/button"
 
 // App states
@@ -27,6 +23,17 @@ export default function CameraRecorder() {
   
   const { videoRef, streamRef, hasPermission, showPermissionButton, requestPermissions, stopCamera } = useCamera()
 
+  // Use the appropriate recording hook based on the selected mode
+  const questionRecording = useQuestionRecording(streamRef, { 
+    totalRecordings: numRecordings, 
+    audioLanguage 
+  })
+  
+  const conversationRecording = useConversationRecording(streamRef, { 
+    totalRecordings: numRecordings
+  })
+  
+  // Select the appropriate recording hook based on mode
   const { 
     isRecording, 
     isCountingDown, 
@@ -38,7 +45,7 @@ export default function CameraRecorder() {
     startRecording, 
     nextRecording,
     completeSession
-  } = useRecording(streamRef, { totalRecordings: numRecordings, audioLanguage, mode })
+  } = mode === "question" ? questionRecording : conversationRecording
 
   // Handle launching the recorder with selected settings
   const handleLaunch = (selectedNumRecordings: number, selectedLanguage: AudioLanguage, selectedTextInputs: TextInput[], selectedMode: "question" | "conversation") => {
