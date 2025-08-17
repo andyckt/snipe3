@@ -13,6 +13,10 @@ export function SettingsScreen({ onLaunch }: SettingsScreenProps) {
   const [activeTab, setActiveTab] = useState<"question" | "conversation">("question")
   const [language, setLanguage] = useState<AudioLanguage>("english")
   
+  const handleLanguageChange = (newLanguage: AudioLanguage) => {
+    setLanguage(newLanguage)
+  }
+  
   return (
     <div className="flex flex-col h-full w-full bg-white p-8 items-center justify-center">
       <h1 className="text-3xl font-bold mb-8">Camera Recorder Settings</h1>
@@ -28,7 +32,11 @@ export function SettingsScreen({ onLaunch }: SettingsScreenProps) {
         </TabsList>
         
         <TabsContent value="question" className="w-full">
-          <QuestionTab onLaunch={onLaunch} />
+          <QuestionTab 
+            onLaunch={onLaunch} 
+            language={language} 
+            onLanguageChange={handleLanguageChange} 
+          />
         </TabsContent>
         
         <TabsContent value="conversation" className="w-full">
