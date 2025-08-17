@@ -127,12 +127,14 @@ export function SettingsScreen({ onLaunch }: SettingsScreenProps) {
         </TabsContent>
       </Tabs>
       
-      <Button 
-        onClick={() => onLaunch(textInputs.length, language, textInputs)}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-4 text-xl rounded-full"
-      >
-        Launch Recorder
-      </Button>
+      {activeTab === "question" && (
+        <Button 
+          onClick={() => onLaunch(textInputs.length, language, textInputs)}
+          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-4 text-xl rounded-full"
+        >
+          Launch Recorder
+        </Button>
+      )}
     </div>
   )
 }
