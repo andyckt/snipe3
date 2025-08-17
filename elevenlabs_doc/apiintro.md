@@ -65,7 +65,9 @@ The text that will get converted into speech.
 
 model_id
 string
-I want to use eleven_multilingual_v2
+Optional
+Defaults to eleven_multilingual_v2
+- I want to use the default one - eleven_multilingual_v2.
 
 voice_settings
 stability
