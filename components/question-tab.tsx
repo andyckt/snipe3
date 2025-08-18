@@ -264,11 +264,12 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
         )
       }
       
-      // Play the audio using mobile-friendly method
-      console.log("Playing audio preview...");
+      // Play the audio using mobile-friendly method with high volume
+      console.log("Playing audio preview at high volume...");
       try {
-        await playMobileAudio(urlToPlay);
-        console.log("Audio preview played successfully");
+        // Use a high volume multiplier (10.0) for maximum volume
+        await playMobileAudio(urlToPlay, 10.0);
+        console.log("Audio preview played successfully at high volume");
       } catch (error) {
         console.error("Mobile audio playback failed, falling back to standard method:", error);
         // Fallback to standard method

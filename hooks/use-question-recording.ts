@@ -106,10 +106,11 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
         // For the first recording, play starter audio followed by the first text input audio
         console.log("Playing starter audio...");
         
-        // First play the starter audio using mobile-friendly method
+        // First play the starter audio using mobile-friendly method with high volume
         try {
-          await playMobileAudio(getAudioPath());
-          console.log("Starter audio played successfully");
+          // Use a high volume multiplier (10.0) for maximum volume
+          await playMobileAudio(getAudioPath(), 10.0);
+          console.log("Starter audio played successfully at high volume");
         } catch (error) {
           console.error("Mobile audio playback failed, falling back to standard method:", error);
           // Fallback to standard method
@@ -134,10 +135,11 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
           
           console.log("Playing first generated audio...");
           
-          // Play the first generated audio immediately after starter audio
+          // Play the first generated audio immediately after starter audio with high volume
           try {
-            await playMobileAudio(urlToPlay);
-            console.log("First generated audio played successfully");
+            // Use a high volume multiplier (10.0) for maximum volume
+            await playMobileAudio(urlToPlay, 10.0);
+            console.log("First generated audio played successfully at high volume");
           } catch (error) {
             console.error("Mobile audio playback failed, falling back to standard method:", error);
             // Fallback to standard method
@@ -165,10 +167,11 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
           
           console.log(`Playing recording ${recordingIndex + 1} audio...`);
           
-          // Play the audio for this recording using mobile-friendly method
+          // Play the audio for this recording using mobile-friendly method with high volume
           try {
-            await playMobileAudio(urlToPlay);
-            console.log(`Recording ${recordingIndex + 1} audio played successfully`);
+            // Use a high volume multiplier (10.0) for maximum volume
+            await playMobileAudio(urlToPlay, 10.0);
+            console.log(`Recording ${recordingIndex + 1} audio played successfully at high volume`);
           } catch (error) {
             console.error("Mobile audio playback failed, falling back to standard method:", error);
             // Fallback to standard method

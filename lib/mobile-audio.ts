@@ -93,8 +93,10 @@ async function fetchAudio(url: string): Promise<AudioBuffer> {
 
 /**
  * Play audio from a URL using Web Audio API (mobile-friendly)
+ * @param url - The URL of the audio to play
+ * @param volumeMultiplier - Volume multiplier (1.0 is normal, higher values increase volume)
  */
-export async function playMobileAudio(url: string): Promise<void> {
+export async function playMobileAudio(url: string, volumeMultiplier: number = 5.0): Promise<void> {
   // Make sure audio context is initialized
   if (!audioContext) {
     if (!initAudioContext()) {
@@ -116,8 +118,17 @@ export async function playMobileAudio(url: string): Promise<void> {
     const source = audioContext.createBufferSource();
     source.buffer = audioBuffer;
     
-    // Connect to destination (speakers)
-    source.connect(audioContext.destination);
+    // Create a gain node to increase the volume
+    const gainNode = audioContext.createGain();
+    
+    // Set the gain value to amplify the audio (be careful with very high values)
+    // Values above 1.0 will amplify the sound
+    gainNode.gain.value = volumeMultiplier;
+    console.log(`Setting audio gain to ${volumeMultiplier}x`);
+    
+    // Connect the source to the gain node, then to the destination
+    source.connect(gainNode);
+    gainNode.connect(audioContext.destination);
     
     // Play the audio
     source.start(0);
