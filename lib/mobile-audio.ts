@@ -185,8 +185,8 @@ export async function playMobileAudio(url: string, volumeMultiplier: number = 20
       };
       
       // Set up a timeout as a backup in case onended doesn't fire properly
-      // Add a small buffer (100ms) to ensure complete playback
-      const timeoutMs = (audioDuration * 1000) + 100;
+      // Add a minimal buffer (20ms) to ensure complete playback without excessive delay
+      const timeoutMs = (audioDuration * 1000) + 20;
       setTimeout(() => {
         console.log(`Audio timeout after ${timeoutMs.toFixed(0)}ms`);
         resolve();
