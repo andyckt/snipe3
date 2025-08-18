@@ -10,6 +10,7 @@ import type React from "react"
 
 import { useEffect, useRef, useState } from "react"
 import { preloadAudio, playAudio } from "@/lib/audio"
+import { initAudioContext, playMobileAudio, preloadMobileAudio } from "@/lib/mobile-audio"
 import { TextInput } from "@/components/question-tab"
 
 interface RecordingOptions {
@@ -41,7 +42,12 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
   
   // Preload the starter audio
   useEffect(() => {
-    startAudioRef.current = preloadAudio(getAudioPath())
+    // Initialize audio context
+    initAudioContext();
+    
+    // Preload the audio using both methods for compatibility
+    startAudioRef.current = preloadAudio(getAudioPath());
+    preloadMobileAudio(getAudioPath()).catch(err => console.error("Error preloading mobile audio:", err));
   }, [audioLanguage])
   
   // Update textInputsRef when textInputs change
@@ -93,10 +99,22 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
   // Helper function to play the appropriate audio for a specific recording index
   const playAudioForRecording = async (recordingIndex: number) => {
     try {
+      // Make sure audio context is initialized
+      initAudioContext();
+      
       if (recordingIndex === 0 && isFirstRecordingRef.current) {
         // For the first recording, play starter audio followed by the first text input audio
-        // First play the starter audio
-        await playAudio(getAudioPath())
+        console.log("Playing starter audio...");
+        
+        // First play the starter audio using mobile-friendly method
+        try {
+          await playMobileAudio(getAudioPath());
+          console.log("Starter audio played successfully");
+        } catch (error) {
+          console.error("Mobile audio playback failed, falling back to standard method:", error);
+          // Fallback to standard method
+          await playAudio(getAudioPath());
+        }
         
         // Then play the first generated audio if available
         if (textInputsRef.current.length > 0 && 
@@ -104,20 +122,30 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
             textInputsRef.current[0].audioKey) {
           
           // Get a fresh presigned URL if we have the key (in case the old one expired)
-          let urlToPlay = textInputsRef.current[0].audioUrl
+          let urlToPlay = textInputsRef.current[0].audioUrl;
           try {
             // Import the getPresignedUrl function
-            const { getPresignedUrl } = await import('@/lib/api-service')
-            urlToPlay = await getPresignedUrl(textInputsRef.current[0].audioKey!)
+            const { getPresignedUrl } = await import('@/lib/api-service');
+            urlToPlay = await getPresignedUrl(textInputsRef.current[0].audioKey!);
+            console.log("Got fresh presigned URL for first audio");
           } catch (err) {
-            // Use existing URL if we can't get a fresh one
+            console.log("Using existing URL for first audio");
           }
           
+          console.log("Playing first generated audio...");
+          
           // Play the first generated audio immediately after starter audio
-          await playAudio(urlToPlay)
+          try {
+            await playMobileAudio(urlToPlay);
+            console.log("First generated audio played successfully");
+          } catch (error) {
+            console.error("Mobile audio playback failed, falling back to standard method:", error);
+            // Fallback to standard method
+            await playAudio(urlToPlay);
+          }
         }
         
-        isFirstRecordingRef.current = false // Mark that we've played the starter audio
+        isFirstRecordingRef.current = false; // Mark that we've played the starter audio
       } else {
         // For subsequent recordings, play the corresponding text input audio
         if (textInputsRef.current.length > recordingIndex && 
@@ -125,21 +153,31 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
             textInputsRef.current[recordingIndex].audioKey) {
           
           // Get a fresh presigned URL if we have the key (in case the old one expired)
-          let urlToPlay = textInputsRef.current[recordingIndex].audioUrl
+          let urlToPlay = textInputsRef.current[recordingIndex].audioUrl;
           try {
             // Import the getPresignedUrl function
-            const { getPresignedUrl } = await import('@/lib/api-service')
-            urlToPlay = await getPresignedUrl(textInputsRef.current[recordingIndex].audioKey!)
+            const { getPresignedUrl } = await import('@/lib/api-service');
+            urlToPlay = await getPresignedUrl(textInputsRef.current[recordingIndex].audioKey!);
+            console.log(`Got fresh presigned URL for recording ${recordingIndex + 1} audio`);
           } catch (err) {
-            // Use existing URL if we can't get a fresh one
+            console.log(`Using existing URL for recording ${recordingIndex + 1} audio`);
           }
           
-          // Play the audio for this recording
-          await playAudio(urlToPlay)
+          console.log(`Playing recording ${recordingIndex + 1} audio...`);
+          
+          // Play the audio for this recording using mobile-friendly method
+          try {
+            await playMobileAudio(urlToPlay);
+            console.log(`Recording ${recordingIndex + 1} audio played successfully`);
+          } catch (error) {
+            console.error("Mobile audio playback failed, falling back to standard method:", error);
+            // Fallback to standard method
+            await playAudio(urlToPlay);
+          }
         }
       }
     } catch (err) {
-      console.error('Failed to play audio:', err)
+      console.error('Failed to play audio:', err);
     }
   }
   

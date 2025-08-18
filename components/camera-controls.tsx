@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { unlockAudio } from "@/lib/audio"
+import { initAudioContext } from "@/lib/mobile-audio"
 
 interface CameraControlsProps {
   showPermissionButton: boolean
@@ -55,6 +56,7 @@ export function CameraControls({
             <Button
               onClick={() => {
                 unlockAudio(); // Unlock audio on user interaction
+                initAudioContext(); // Initialize Web Audio API context
                 onRequestPermissions();
               }}
               className="bg-sky-400 hover:bg-sky-500 text-white font-semibold px-6 py-3 rounded-full min-w-[120px]"
@@ -67,6 +69,7 @@ export function CameraControls({
             <Button
               onClick={() => {
                 unlockAudio(); // Unlock audio on user interaction
+                initAudioContext(); // Initialize Web Audio API context
                 onStartRecording();
               }}
               className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-full min-w-[120px]"
@@ -79,6 +82,7 @@ export function CameraControls({
             <Button
               onClick={() => {
                 unlockAudio(); // Unlock audio on user interaction
+                initAudioContext(); // Initialize Web Audio API context
                 onNextRecording();
               }}
               className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-full min-w-[120px]"
@@ -91,6 +95,7 @@ export function CameraControls({
             <Button
               onClick={() => {
                 unlockAudio(); // Unlock audio on user interaction
+                initAudioContext(); // Initialize Web Audio API context
                 onCompleteSession();
               }}
               className="bg-red-500 text-white font-semibold px-6 py-3 rounded-full min-w-[120px] opacity-50 hover:opacity-100 hover:bg-red-500"

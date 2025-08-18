@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { AudioLanguage, TextInput } from "./question-tab"
 import { unlockAudio } from "@/lib/audio"
+import { initAudioContext } from "@/lib/mobile-audio"
 
 interface ConversationTabProps {
   onLaunch: (numRecordings: number, language: AudioLanguage, textInputs: TextInput[], mode: "question" | "conversation") => void
@@ -16,6 +17,7 @@ export function ConversationTab({ onLaunch, language }: ConversationTabProps) {
         <Button 
           onClick={() => {
             unlockAudio(); // Unlock audio on user interaction
+            initAudioContext(); // Initialize Web Audio API context
             onLaunch(1, language, [{ id: "conversation", value: "" }], "conversation");
           }}
           className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-4 text-xl rounded-full"

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { PlusCircle, MinusCircle, Volume2, Loader2, GripVertical } from "lucide-react"
 import { textToSpeechAndUpload, playAudio, getPresignedUrl } from "@/lib/api-service"
 import { unlockAudio } from "@/lib/audio"
+import { initAudioContext, playMobileAudio } from "@/lib/mobile-audio"
 import {
   DndContext,
   closestCenter,
@@ -100,6 +101,7 @@ function SortableTextInput({
         <Button
           onClick={() => {
             unlockAudio(); // Unlock audio on user interaction
+            initAudioContext(); // Initialize Web Audio API context
             input.audioUrl ? onPlayAudio(input.audioUrl, input.audioKey) : onGenerateSpeech(input.id, input.value);
           }}
           disabled={!input.value.trim() || input.isGenerating}
@@ -140,9 +142,13 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
   
   // Try to unlock audio on component mount and on any user interaction
   useEffect(() => {
+    // Try to initialize audio context immediately
+    initAudioContext();
+    
     // Add event listeners to unlock audio on any user interaction
     const unlockOnUserInteraction = () => {
       unlockAudio();
+      initAudioContext();
       // Remove event listeners after first interaction
       document.removeEventListener('click', unlockOnUserInteraction);
       document.removeEventListener('touchstart', unlockOnUserInteraction);
@@ -241,6 +247,9 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
     if (!audioUrl) return
     
     try {
+      // Initialize audio context
+      initAudioContext();
+      
       // If we have a key, get a fresh presigned URL (in case the old one expired)
       let urlToPlay = audioUrl
       if (audioKey) {
@@ -255,8 +264,16 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
         )
       }
       
-      // Play the audio
-      playAudio(urlToPlay)
+      // Play the audio using mobile-friendly method
+      console.log("Playing audio preview...");
+      try {
+        await playMobileAudio(urlToPlay);
+        console.log("Audio preview played successfully");
+      } catch (error) {
+        console.error("Mobile audio playback failed, falling back to standard method:", error);
+        // Fallback to standard method
+        playAudio(urlToPlay);
+      }
     } catch (error) {
       console.error('Error playing audio:', error)
       alert('Failed to play audio. Please try again.')
@@ -354,6 +371,7 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
         <Button 
           onClick={() => {
             unlockAudio(); // Unlock audio on user interaction
+            initAudioContext(); // Initialize Web Audio API context
             onLaunch(textInputs.length, language, textInputs, "question");
           }}
           className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-4 text-xl rounded-full"

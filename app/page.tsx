@@ -10,6 +10,7 @@ import { useQuestionRecording } from "@/hooks/use-question-recording"
 import { useConversationRecording } from "@/hooks/use-conversation-recording"
 import { Button } from "@/components/ui/button"
 import { unlockAudio } from "@/lib/audio"
+import { initAudioContext } from "@/lib/mobile-audio"
 
 // App states
 type AppState = "settings" | "recording" | "completed"
@@ -26,10 +27,18 @@ export default function CameraRecorder() {
   useEffect(() => {
     // Try to unlock audio immediately
     unlockAudio();
+    initAudioContext();
     
     // Add event listeners to unlock audio on any user interaction
     const unlockOnUserInteraction = () => {
       unlockAudio();
+      initAudioContext();
+      console.log("User interaction detected, attempting to unlock audio");
+      
+      // Create and play a silent sound to unlock audio on iOS
+      const silentSound = new Audio("data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
+      silentSound.play().catch(err => console.error("Failed to play silent sound:", err));
+      
       // Remove event listeners after first interaction
       document.removeEventListener('click', unlockOnUserInteraction);
       document.removeEventListener('touchstart', unlockOnUserInteraction);
