@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { PlusCircle, MinusCircle, Volume2, Loader2, GripVertical } from "lucide-react"
 import { textToSpeechAndUpload, playAudio, getPresignedUrl } from "@/lib/api-service"
+import { unlockAudio } from "@/lib/audio"
 import {
   DndContext,
   closestCenter,
@@ -97,7 +98,10 @@ function SortableTextInput({
       
       <div className="flex gap-1">
         <Button
-          onClick={() => input.audioUrl ? onPlayAudio(input.audioUrl, input.audioKey) : onGenerateSpeech(input.id, input.value)}
+          onClick={() => {
+            unlockAudio(); // Unlock audio on user interaction
+            input.audioUrl ? onPlayAudio(input.audioUrl, input.audioKey) : onGenerateSpeech(input.id, input.value);
+          }}
           disabled={!input.value.trim() || input.isGenerating}
           variant="ghost"
           size="icon"
@@ -133,6 +137,28 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
   const [textInputs, setTextInputs] = useState<TextInput[]>([
     { id: crypto.randomUUID(), value: '', audioUrl: undefined, audioKey: undefined, isGenerating: false }
   ])
+  
+  // Try to unlock audio on component mount and on any user interaction
+  useEffect(() => {
+    // Add event listeners to unlock audio on any user interaction
+    const unlockOnUserInteraction = () => {
+      unlockAudio();
+      // Remove event listeners after first interaction
+      document.removeEventListener('click', unlockOnUserInteraction);
+      document.removeEventListener('touchstart', unlockOnUserInteraction);
+      document.removeEventListener('touchend', unlockOnUserInteraction);
+    };
+    
+    document.addEventListener('click', unlockOnUserInteraction);
+    document.addEventListener('touchstart', unlockOnUserInteraction);
+    document.addEventListener('touchend', unlockOnUserInteraction);
+    
+    return () => {
+      document.removeEventListener('click', unlockOnUserInteraction);
+      document.removeEventListener('touchstart', unlockOnUserInteraction);
+      document.removeEventListener('touchend', unlockOnUserInteraction);
+    };
+  }, [])
   
   // Set up sensors for drag and drop
   const sensors = useSensors(
@@ -326,7 +352,10 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
       
       <div className="flex justify-center">
         <Button 
-          onClick={() => onLaunch(textInputs.length, language, textInputs, "question")}
+          onClick={() => {
+            unlockAudio(); // Unlock audio on user interaction
+            onLaunch(textInputs.length, language, textInputs, "question");
+          }}
           className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-4 text-xl rounded-full"
         >
           Launch Recorder

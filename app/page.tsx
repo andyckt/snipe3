@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { CameraView } from "@/components/camera-view"
 import { CameraControls } from "@/components/camera-controls"
 import { SettingsScreen } from "@/components/settings-screen"
@@ -9,6 +9,7 @@ import { useCamera } from "@/hooks/use-camera"
 import { useQuestionRecording } from "@/hooks/use-question-recording"
 import { useConversationRecording } from "@/hooks/use-conversation-recording"
 import { Button } from "@/components/ui/button"
+import { unlockAudio } from "@/lib/audio"
 
 // App states
 type AppState = "settings" | "recording" | "completed"
@@ -20,6 +21,31 @@ export default function CameraRecorder() {
   const [audioLanguage, setAudioLanguage] = useState<AudioLanguage>("english")
   const [textInputs, setTextInputs] = useState<TextInput[]>([{ id: "default", value: "" }])
   const [mode, setMode] = useState<"question" | "conversation">("question")
+  
+  // Try to unlock audio on component mount and on any user interaction
+  useEffect(() => {
+    // Try to unlock audio immediately
+    unlockAudio();
+    
+    // Add event listeners to unlock audio on any user interaction
+    const unlockOnUserInteraction = () => {
+      unlockAudio();
+      // Remove event listeners after first interaction
+      document.removeEventListener('click', unlockOnUserInteraction);
+      document.removeEventListener('touchstart', unlockOnUserInteraction);
+      document.removeEventListener('touchend', unlockOnUserInteraction);
+    };
+    
+    document.addEventListener('click', unlockOnUserInteraction);
+    document.addEventListener('touchstart', unlockOnUserInteraction);
+    document.addEventListener('touchend', unlockOnUserInteraction);
+    
+    return () => {
+      document.removeEventListener('click', unlockOnUserInteraction);
+      document.removeEventListener('touchstart', unlockOnUserInteraction);
+      document.removeEventListener('touchend', unlockOnUserInteraction);
+    };
+  }, [])
   
   const { videoRef, streamRef, hasPermission, showPermissionButton, requestPermissions, stopCamera } = useCamera()
 

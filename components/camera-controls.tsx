@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { unlockAudio } from "@/lib/audio"
 
 interface CameraControlsProps {
   showPermissionButton: boolean
@@ -52,7 +53,10 @@ export function CameraControls({
         <div className="flex justify-center gap-4">
           {showPermissionButton && (
             <Button
-              onClick={onRequestPermissions}
+              onClick={() => {
+                unlockAudio(); // Unlock audio on user interaction
+                onRequestPermissions();
+              }}
               className="bg-sky-400 hover:bg-sky-500 text-white font-semibold px-6 py-3 rounded-full min-w-[120px]"
             >
               Enable Camera
@@ -61,7 +65,10 @@ export function CameraControls({
 
           {hasPermission && !isRecording && !isCountingDown && currentRecordingIndex === 0 && (
             <Button
-              onClick={onStartRecording}
+              onClick={() => {
+                unlockAudio(); // Unlock audio on user interaction
+                onStartRecording();
+              }}
               className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-full min-w-[120px]"
             >
               Start Recording
@@ -70,7 +77,10 @@ export function CameraControls({
 
           {isRecording && !isLastRecording && (
             <Button
-              onClick={onNextRecording}
+              onClick={() => {
+                unlockAudio(); // Unlock audio on user interaction
+                onNextRecording();
+              }}
               className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-full min-w-[120px]"
             >
               Next
@@ -79,7 +89,10 @@ export function CameraControls({
 
           {isRecording && isLastRecording && (
             <Button
-              onClick={onCompleteSession}
+              onClick={() => {
+                unlockAudio(); // Unlock audio on user interaction
+                onCompleteSession();
+              }}
               className="bg-red-500 text-white font-semibold px-6 py-3 rounded-full min-w-[120px] opacity-50 hover:opacity-100 hover:bg-red-500"
             >
               Done

@@ -1,0 +1,167 @@
+commit c2eccc0b456713f59812480e3a3861eea218f923
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Mon Aug 18 11:41:45 2025 +0800
+
+    removed logs
+
+commit 9a663167daab1a894041d100e85e07f68c7d19c9
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Mon Aug 18 11:22:22 2025 +0800
+
+    finish linking audio files to recording
+
+commit a09ed18a1ccd8f393ad8cf67de2ece1389394b6a
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Mon Aug 18 11:01:31 2025 +0800
+
+    first audio sucessfully after the starter audio
+
+commit 712e3ced332734342170691a75c08abaf0b6736f
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sun Aug 17 19:22:30 2025 +0800
+
+    seperate use-recording.ts file
+
+commit e8dd6ab44b0b68d84a66f946ee5b37b1deb08bad
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sun Aug 17 16:48:58 2025 +0800
+
+    hosting to vercel
+
+commit 9dd4e4c3c8b54efb64c0d4bffbbe26af0911327f
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sun Aug 17 16:38:45 2025 +0800
+
+    server side now
+
+commit 250448aa1c775598b7bd78ac6fe8cf651b6a2fea
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sun Aug 17 16:18:45 2025 +0800
+
+    finish AWS linking
+
+commit 3ea9a310ec84481e734b63b8021b947b42a93a16
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sun Aug 17 15:59:02 2025 +0800
+
+    link to AWS for generating audio
+
+commit bf723958b2d4af5e146a9ec61c18ada49f2a2a88
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sun Aug 17 15:13:43 2025 +0800
+
+    continue
+
+commit 0ded6e8ea046f2ab196ba046cd4f72a192dfb5fe
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sun Aug 17 14:43:17 2025 +0800
+
+    added drag and drop reordering UI
+
+commit 47f9c28a4281e2ceb351a17ce87840789d6c224a
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sun Aug 17 14:07:18 2025 +0800
+
+    add chinese and english audio
+
+commit bf105ba266ec95db60deb8f21a641b07c4939ae8
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sun Aug 17 13:44:06 2025 +0800
+
+    able to generate the audio
+
+commit 3abe8b3aa054384a9a96803c7a6c780198dd3ea1
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sun Aug 17 09:30:08 2025 +0800
+
+    different files
+
+commit 8ed783b9a791abe689b928e6335792efc463af09
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sun Aug 17 09:26:31 2025 +0800
+
+    conversation tab only has 1 recording
+
+commit eb67e1923716cb5ece3f6d2e7d5f6e6f007b02c0
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sun Aug 17 09:05:42 2025 +0800
+
+    start working on conversation tab
+
+commit b7c11d61204aec05a667436be155d39dfe3ee7dc
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sun Aug 17 09:04:19 2025 +0800
+
+    added two tabs in setting
+
+commit 7a4208a0ad40c0d4efba3ab72e0f802d96f4334c
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sat Aug 16 18:19:08 2025 +0800
+
+    added text inputs and number of recoridng is now dependent on the number of text inputs
+
+commit 1ceeeecbbfd7aea98f09ffa215d26a4d76db28cf
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sat Aug 16 18:07:03 2025 +0800
+
+    added text input
+
+commit 202d5057e24d1e8889501fad8a2525278bea4c05
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sat Aug 16 17:56:00 2025 +0800
+
+    added elevenlabs documentaion
+
+commit 57211451e03e5fc1aef2ca9636ba3f26cd835359
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sat Aug 16 16:19:53 2025 +0800
+
+    add mandarin audio
+
+commit 268208e1cb62712ff41609e37021346777539261
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sat Aug 16 16:13:14 2025 +0800
+
+    add englishstarter audio
+
+commit a11d1df70897ed558e6826ab7272adff6ffab46e
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sat Aug 16 14:49:05 2025 +0800
+
+    simplify thank you page
+
+commit 763858111749ff9a09d50cd8c585d5b39c5bec89
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sat Aug 16 14:43:28 2025 +0800
+
+    add setting panel to select number of recordings
+
+commit ec3bf2e8abc38219517aad6e0d4de52eeb09c596
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sat Aug 16 14:34:00 2025 +0800
+
+    try playing with 3 recordings
+
+commit 26a7a0c373376904c1f2e7e01b6524d75388dd5c
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sat Aug 16 14:32:15 2025 +0800
+
+    add thank you page
+
+commit c20c6f352cc5caf1f81c68888280e17f86ef9582
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sat Aug 16 14:24:51 2025 +0800
+
+    add multiple recording
+
+commit abb2618a123aec3b9037cb5a18f246b290f950aa
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Sat Aug 16 14:10:59 2025 +0800
+
+    hide the start recording button during recording
+
+commit d3c5732c1bfc46ee04e3df521f1c5a9fe1c3baeb
+Author: andyckt <kamtocheung1104@gmail.com>
+Date:   Fri Aug 15 13:33:23 2025 +0800
+
+    first commit

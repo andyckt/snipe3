@@ -85,8 +85,20 @@ export async function getPresignedUrl(key: string): Promise<string> {
  * @param audioUrl - The URL of the audio to play
  */
 export const playAudio = (audioUrl: string): void => {
-  const audio = new Audio(audioUrl);
-  audio.play().catch(error => {
-    console.error('Error playing audio:', error);
+  // Import the enhanced audio playback function from our audio utility
+  import('@/lib/audio').then(({ playAudio, unlockAudio }) => {
+    // Try to unlock audio first
+    unlockAudio();
+    // Then play the audio
+    playAudio(audioUrl).catch(error => {
+      console.error('Error playing audio:', error);
+    });
+  }).catch(error => {
+    console.error('Error importing audio utilities:', error);
+    // Fallback to basic audio playback
+    const audio = new Audio(audioUrl);
+    audio.play().catch(error => {
+      console.error('Error playing audio (fallback):', error);
+    });
   });
 };
