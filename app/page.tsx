@@ -56,16 +56,6 @@ export default function CameraRecorder() {
     setTextInputs(selectedTextInputs)
     setMode(selectedMode)
     setAppState("recording")
-    
-    // Log the text inputs for debugging
-    console.log("Text inputs in handleLaunch:", selectedTextInputs)
-    console.log("Number of recordings:", selectedTextInputs.length)
-    console.log("Mode:", selectedMode)
-    
-    // Log each text input with its audio details
-    selectedTextInputs.forEach((input, index) => {
-      console.log(`Text input ${index + 1}:`, input.value, "Audio URL:", !!input.audioUrl, "Audio Key:", !!input.audioKey)
-    })
   }
 
   // Handle starting a recording

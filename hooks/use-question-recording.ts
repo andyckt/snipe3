@@ -46,13 +46,6 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
   
   // Update textInputsRef when textInputs change
   useEffect(() => {
-    console.log("Text inputs updated in hook:", textInputs)
-    console.log("Text inputs length:", textInputs.length)
-    if (textInputs.length > 0) {
-      textInputs.forEach((input, index) => {
-        console.log(`Text input ${index + 1}:`, input.value, "Audio URL:", !!input.audioUrl, "Audio Key:", !!input.audioKey)
-      })
-    }
     textInputsRef.current = textInputs
   }, [textInputs])
 
@@ -110,17 +103,14 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
             textInputsRef.current[0].audioUrl && 
             textInputsRef.current[0].audioKey) {
           
-          console.log("Playing first generated audio:", textInputsRef.current[0].value)
-          
           // Get a fresh presigned URL if we have the key (in case the old one expired)
           let urlToPlay = textInputsRef.current[0].audioUrl
           try {
             // Import the getPresignedUrl function
             const { getPresignedUrl } = await import('@/lib/api-service')
             urlToPlay = await getPresignedUrl(textInputsRef.current[0].audioKey!)
-            console.log("Got fresh presigned URL for first audio")
           } catch (err) {
-            console.log("Using existing URL for first audio")
+            // Use existing URL if we can't get a fresh one
           }
           
           // Play the first generated audio immediately after starter audio
@@ -130,13 +120,9 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
         isFirstRecordingRef.current = false // Mark that we've played the starter audio
       } else {
         // For subsequent recordings, play the corresponding text input audio
-        console.log(`Attempting to play audio for recording ${recordingIndex + 1}`)
-        
         if (textInputsRef.current.length > recordingIndex && 
             textInputsRef.current[recordingIndex].audioUrl && 
             textInputsRef.current[recordingIndex].audioKey) {
-          
-          console.log(`Playing recording ${recordingIndex + 1} audio:`, textInputsRef.current[recordingIndex].value)
           
           // Get a fresh presigned URL if we have the key (in case the old one expired)
           let urlToPlay = textInputsRef.current[recordingIndex].audioUrl
@@ -144,18 +130,12 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
             // Import the getPresignedUrl function
             const { getPresignedUrl } = await import('@/lib/api-service')
             urlToPlay = await getPresignedUrl(textInputsRef.current[recordingIndex].audioKey!)
-            console.log(`Got fresh presigned URL for recording ${recordingIndex + 1} audio`)
           } catch (err) {
-            console.log(`Using existing URL for recording ${recordingIndex + 1} audio`)
+            // Use existing URL if we can't get a fresh one
           }
           
           // Play the audio for this recording
           await playAudio(urlToPlay)
-        } else {
-          console.warn(`No audio available for recording ${recordingIndex + 1}`)
-          if (textInputsRef.current.length > recordingIndex) {
-            console.log(`Text input exists but no audio: ${textInputsRef.current[recordingIndex].value}`)
-          }
         }
       }
     } catch (err) {
@@ -165,8 +145,6 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
   
   // Start recording with a specific index (used by nextRecording)
   const startRecordingWithIndex = async (recordingIndex: number, skipCountdown = false) => {
-    console.log(`Starting recording with explicit index: ${recordingIndex + 1}`)
-    
     // Run countdown unless skipped
     if (!skipCountdown) {
       await runCountdown()
@@ -186,8 +164,6 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
       } else if (MediaRecorder.isTypeSupported("video/webm")) {
         mimeType = "video/webm"
       }
-
-      console.log("Using MIME type:", mimeType)
 
       if (!streamRef.current) {
         throw new Error("No stream available")
@@ -245,28 +221,15 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
     
     // Move to the next recording index
     const nextIndex = currentRecordingIndex + 1
-    console.log(`Moving to next recording: ${nextIndex + 1} of ${totalRecordings}`)
-    console.log(`Text inputs available: ${textInputsRef.current.length}`)
-    
-    // Log the current text input that should be used for the next recording
-    if (textInputsRef.current.length > nextIndex) {
-      console.log(`Next text input (${nextIndex + 1}):`, textInputsRef.current[nextIndex].value)
-      console.log(`Next audio available:`, !!textInputsRef.current[nextIndex].audioUrl, !!textInputsRef.current[nextIndex].audioKey)
-    }
     
     // Update the current recording index state
     setCurrentRecordingIndex(nextIndex)
     
     // Check if we've reached the end of the session
     if (nextIndex >= totalRecordings) {
-      console.log("Session complete")
       setIsSessionComplete(true)
     } else {
       // Start the next recording with a small delay to ensure the previous one is processed
-      console.log(`Starting recording ${nextIndex + 1} in 500ms`)
-      
-      // We need to pass the nextIndex to startRecording to ensure it uses the correct index
-      // before the state update is reflected in currentRecordingIndex
       setTimeout(() => {
         startRecordingWithIndex(nextIndex, false) // Start with countdown and specify index
       }, 500)
