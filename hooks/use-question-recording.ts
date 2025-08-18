@@ -113,16 +113,16 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
           await playMobileAudio(getAudioPath(), 30.0);
           console.log("Starter audio played successfully at high volume");
           
-          // Add a minimal delay between audio files to ensure they don't overlap
-          // Just enough time for the browser to process the end of one audio and start the next
-          await new Promise(resolve => setTimeout(resolve, 50));
-          console.log("Added minimal 50ms delay between audio files");
+          // Add absolute minimal delay between audio files
+          // Just enough for the browser to register the end of one audio
+          await new Promise(resolve => setTimeout(resolve, 10));
+          console.log("Added micro delay (10ms) between audio files");
         } catch (error) {
           console.error("Mobile audio playback failed, falling back to standard method:", error);
           // Fallback to standard method
           await playAudio(getAudioPath());
-          // Also add minimal delay after fallback method
-          await new Promise(resolve => setTimeout(resolve, 50));
+          // Also add micro delay after fallback method
+          await new Promise(resolve => setTimeout(resolve, 10));
         }
         
         // Then play the first generated audio if available
