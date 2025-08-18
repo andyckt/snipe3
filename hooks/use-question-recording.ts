@@ -10,14 +10,16 @@ import type React from "react"
 
 import { useEffect, useRef, useState } from "react"
 import { preloadAudio, playAudio } from "@/lib/audio"
+import { TextInput } from "@/components/question-tab"
 
 interface RecordingOptions {
   totalRecordings?: number
   audioLanguage?: "english" | "mandarin"
+  textInputs?: TextInput[] // Add textInputs to options
 }
 
 export function useQuestionRecording(streamRef: React.RefObject<MediaStream | null>, options: RecordingOptions = {}) {
-  const { totalRecordings = 1, audioLanguage = "english" } = options
+  const { totalRecordings = 1, audioLanguage = "english", textInputs = [] } = options
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<Blob[]>([])
@@ -28,6 +30,7 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
   const [isSessionComplete, setIsSessionComplete] = useState(false)
   const startAudioRef = useRef<HTMLAudioElement | null>(null)
   const isFirstRecordingRef = useRef(true) // Track if this is the first recording in the session
+  const textInputsRef = useRef<TextInput[]>(textInputs) // Store the text inputs for access during recording
   
   // Get the audio file path based on language
   const getAudioPath = () => {
@@ -40,6 +43,11 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
   useEffect(() => {
     startAudioRef.current = preloadAudio(getAudioPath())
   }, [audioLanguage])
+  
+  // Update textInputsRef when textInputs change
+  useEffect(() => {
+    textInputsRef.current = textInputs
+  }, [textInputs])
 
   const runCountdown = async () => {
     setIsCountingDown(true)
@@ -95,15 +103,7 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
       await runCountdown()
     }
 
-    // Play starter audio if this is the first recording of the session
-    if (isFirstRecordingRef.current) {
-      playAudio(getAudioPath()).catch(err => {
-        console.error('Failed to play starter audio:', err)
-      })
-      isFirstRecordingRef.current = false // Mark that we've played the audio
-    }
-
-    // Setup media recorder
+    // Setup media recorder first - this starts the recording
     try {
       let mimeType = "video/webm"
 
@@ -142,6 +142,41 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
       // Start recording
       mediaRecorder.start(1000) // Collect data in 1-second chunks
       setIsRecording(true)
+
+      // After recording has started, play the audio sequence
+      // Play starter audio if this is the first recording of the session
+      if (isFirstRecordingRef.current) {
+        try {
+          // First play the starter audio
+          await playAudio(getAudioPath())
+          
+          // Then play the first generated audio if available
+          if (textInputsRef.current.length > 0 && 
+              textInputsRef.current[0].audioUrl && 
+              textInputsRef.current[0].audioKey) {
+            
+            console.log("Playing first generated audio:", textInputsRef.current[0].value)
+            
+            // Get a fresh presigned URL if we have the key (in case the old one expired)
+            let urlToPlay = textInputsRef.current[0].audioUrl
+            try {
+              // Import the getPresignedUrl function
+              const { getPresignedUrl } = await import('@/lib/api-service')
+              urlToPlay = await getPresignedUrl(textInputsRef.current[0].audioKey!)
+              console.log("Got fresh presigned URL for first audio")
+            } catch (err) {
+              console.log("Using existing URL for first audio")
+            }
+            
+            // Play the first generated audio immediately after starter audio
+            await playAudio(urlToPlay)
+          }
+        } catch (err) {
+          console.error('Failed to play audio:', err)
+        }
+        
+        isFirstRecordingRef.current = false // Mark that we've played the audio
+      }
     } catch (err) {
       console.error("MediaRecorder error:", err)
       alert("Failed to start recording. Please try again. Error: " + (err as Error).message)

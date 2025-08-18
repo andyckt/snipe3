@@ -26,7 +26,8 @@ export default function CameraRecorder() {
   // Use the appropriate recording hook based on the selected mode
   const questionRecording = useQuestionRecording(streamRef, { 
     totalRecordings: numRecordings, 
-    audioLanguage 
+    audioLanguage,
+    textInputs // Pass the textInputs to the question recording hook
   })
   
   const conversationRecording = useConversationRecording(streamRef, { 
