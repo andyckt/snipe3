@@ -168,12 +168,29 @@ export async function playMobileAudio(url: string, volumeMultiplier: number = 20
     compressor.connect(gainNode);
     gainNode.connect(audioContext.destination);
     
+    // Calculate audio duration in seconds
+    const audioDuration = audioBuffer.duration;
+    console.log(`Audio duration: ${audioDuration.toFixed(2)} seconds`);
+    
     // Play the audio
     source.start(0);
     
     // Return a promise that resolves when the audio finishes playing
+    // Use both the onended event AND a timeout as backup
     return new Promise((resolve) => {
-      source.onended = () => resolve();
+      // Set up the onended event handler
+      source.onended = () => {
+        console.log('Audio ended event fired');
+        resolve();
+      };
+      
+      // Set up a timeout as a backup in case onended doesn't fire properly
+      // Add a small buffer (100ms) to ensure complete playback
+      const timeoutMs = (audioDuration * 1000) + 100;
+      setTimeout(() => {
+        console.log(`Audio timeout after ${timeoutMs.toFixed(0)}ms`);
+        resolve();
+      }, timeoutMs);
     });
   } catch (err) {
     console.error('Error playing audio:', err);
