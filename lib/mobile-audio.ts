@@ -92,11 +92,22 @@ async function fetchAudio(url: string): Promise<AudioBuffer> {
 }
 
 /**
+ * Check if the device is mobile
+ */
+function isMobileDevice(): boolean {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+/**
  * Play audio from a URL using Web Audio API (mobile-friendly)
  * @param url - The URL of the audio to play
  * @param volumeMultiplier - Volume multiplier (1.0 is normal, higher values increase volume)
  */
 export async function playMobileAudio(url: string, volumeMultiplier: number = 20.0): Promise<void> {
+  // Adjust volume based on device type
+  // Use high volume for mobile, normal volume for desktop
+  const effectiveVolume = isMobileDevice() ? volumeMultiplier : 1.0;
+  console.log(`Device detected as ${isMobileDevice() ? 'mobile' : 'desktop'}, using volume: ${effectiveVolume}x`);
   // Make sure audio context is initialized
   if (!audioContext) {
     if (!initAudioContext()) {
@@ -129,18 +140,28 @@ export async function playMobileAudio(url: string, volumeMultiplier: number = 20
     // Create a compressor node to make the audio louder without distortion
     const compressor = audioContext.createDynamicsCompressor();
     
-    // Configure the compressor for maximum loudness
-    // These settings will make the audio as loud as possible while minimizing distortion
-    compressor.threshold.value = -50;  // Start compressing at a very low threshold
-    compressor.knee.value = 40;        // Smooth compression curve
-    compressor.ratio.value = 12;       // Heavy compression
-    compressor.attack.value = 0;       // Immediate attack
-    compressor.release.value = 0.25;   // Quick release
+    // Configure the compressor based on device type
+    if (isMobileDevice()) {
+      // Mobile device: Configure for maximum loudness
+      // These settings will make the audio as loud as possible while minimizing distortion
+      compressor.threshold.value = -50;  // Start compressing at a very low threshold
+      compressor.knee.value = 40;        // Smooth compression curve
+      compressor.ratio.value = 12;       // Heavy compression
+      compressor.attack.value = 0;       // Immediate attack
+      compressor.release.value = 0.25;   // Quick release
+    } else {
+      // Desktop device: Use gentler compression settings
+      compressor.threshold.value = -24;  // Higher threshold for less compression
+      compressor.knee.value = 30;        // Smoother knee for natural sound
+      compressor.ratio.value = 4;        // Lighter compression
+      compressor.attack.value = 0.003;   // Slight attack for more natural sound
+      compressor.release.value = 0.25;   // Standard release
+    }
     
     // Set the gain value to amplify the audio (be careful with very high values)
     // Values above 1.0 will amplify the sound
-    gainNode.gain.value = volumeMultiplier;
-    console.log(`Setting audio gain to ${volumeMultiplier}x with compression`);
+    gainNode.gain.value = effectiveVolume;
+    console.log(`Setting audio gain to ${effectiveVolume}x with compression`);
     
     // Connect the source to the compressor, then to the gain node, then to the destination
     source.connect(compressor);
