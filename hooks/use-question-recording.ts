@@ -40,15 +40,38 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
       : '/audio/mandarinstarter.mp3'
   }
   
-  // Preload the starter audio
+  // Preload all audio files that will be needed
   useEffect(() => {
     // Initialize audio context
     initAudioContext();
     
-    // Preload the audio using both methods for compatibility
+    // Preload the starter audio using both methods for compatibility
     startAudioRef.current = preloadAudio(getAudioPath());
     preloadMobileAudio(getAudioPath()).catch(err => console.error("Error preloading mobile audio:", err));
-  }, [audioLanguage])
+    
+    // Also preload the first generated audio if available
+    const preloadFirstGeneratedAudio = async () => {
+      if (textInputsRef.current.length > 0 && 
+          textInputsRef.current[0].audioUrl && 
+          textInputsRef.current[0].audioKey) {
+        try {
+          // Get a fresh presigned URL if needed
+          const { getPresignedUrl } = await import('@/lib/api-service');
+          const urlToPreload = await getPresignedUrl(textInputsRef.current[0].audioKey!);
+          console.log("Preloading first generated audio...");
+          
+          // Preload using both methods
+          preloadAudio(urlToPreload);
+          await preloadMobileAudio(urlToPreload);
+          console.log("First generated audio preloaded successfully");
+        } catch (err) {
+          console.error("Error preloading first generated audio:", err);
+        }
+      }
+    };
+    
+    preloadFirstGeneratedAudio();
+  }, [audioLanguage, textInputsRef.current])
   
   // Update textInputsRef when textInputs change
   useEffect(() => {
@@ -113,16 +136,15 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
           await playMobileAudio(getAudioPath(), 30.0);
           console.log("Starter audio played successfully at high volume");
           
-          // Add absolute minimal delay between audio files
-          // Just enough for the browser to register the end of one audio
-          await new Promise(resolve => setTimeout(resolve, 10));
-          console.log("Added micro delay (10ms) between audio files");
+          // No delay between audio files for seamless playback
+          // The audio files are preloaded, so we can start playing the next one immediately
+          console.log("Zero delay between audio files for seamless transition");
         } catch (error) {
           console.error("Mobile audio playback failed, falling back to standard method:", error);
           // Fallback to standard method
           await playAudio(getAudioPath());
-          // Also add micro delay after fallback method
-          await new Promise(resolve => setTimeout(resolve, 10));
+          // No delay for seamless transition
+          console.log("Zero delay after fallback method for seamless transition");
         }
         
         // Then play the first generated audio if available
@@ -130,18 +152,14 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
             textInputsRef.current[0].audioUrl && 
             textInputsRef.current[0].audioKey) {
           
-          // Get a fresh presigned URL if we have the key (in case the old one expired)
+          // We already have a preloaded URL from the preloading step
+          // No need to fetch a new one, which would introduce delay
           let urlToPlay = textInputsRef.current[0].audioUrl;
-          try {
-            // Import the getPresignedUrl function
-            const { getPresignedUrl } = await import('@/lib/api-service');
-            urlToPlay = await getPresignedUrl(textInputsRef.current[0].audioKey!);
-            console.log("Got fresh presigned URL for first audio");
-          } catch (err) {
-            console.log("Using existing URL for first audio");
-          }
           
-          console.log("Playing first generated audio...");
+          // Note: We're skipping the getPresignedUrl call here since we've already
+          // preloaded the audio with a fresh URL during the preloading step
+          
+          console.log("Playing first generated audio (preloaded)...");
           
           // Play the first generated audio immediately after starter audio with high volume
           try {
