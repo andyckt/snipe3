@@ -46,6 +46,13 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
   
   // Update textInputsRef when textInputs change
   useEffect(() => {
+    console.log("Text inputs updated in hook:", textInputs)
+    console.log("Text inputs length:", textInputs.length)
+    if (textInputs.length > 0) {
+      textInputs.forEach((input, index) => {
+        console.log(`Text input ${index + 1}:`, input.value, "Audio URL:", !!input.audioUrl, "Audio Key:", !!input.audioKey)
+      })
+    }
     textInputsRef.current = textInputs
   }, [textInputs])
 
@@ -90,13 +97,75 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
     recordedChunksRef.current = []
   }
 
-  const startRecording = async (skipCountdown = false) => {
-    // Reset if starting a new session
-    if (isSessionComplete) {
-      setCurrentRecordingIndex(0)
-      setIsSessionComplete(false)
-      isFirstRecordingRef.current = true // Reset first recording flag
+  // Helper function to play the appropriate audio for a specific recording index
+  const playAudioForRecording = async (recordingIndex: number) => {
+    try {
+      if (recordingIndex === 0 && isFirstRecordingRef.current) {
+        // For the first recording, play starter audio followed by the first text input audio
+        // First play the starter audio
+        await playAudio(getAudioPath())
+        
+        // Then play the first generated audio if available
+        if (textInputsRef.current.length > 0 && 
+            textInputsRef.current[0].audioUrl && 
+            textInputsRef.current[0].audioKey) {
+          
+          console.log("Playing first generated audio:", textInputsRef.current[0].value)
+          
+          // Get a fresh presigned URL if we have the key (in case the old one expired)
+          let urlToPlay = textInputsRef.current[0].audioUrl
+          try {
+            // Import the getPresignedUrl function
+            const { getPresignedUrl } = await import('@/lib/api-service')
+            urlToPlay = await getPresignedUrl(textInputsRef.current[0].audioKey!)
+            console.log("Got fresh presigned URL for first audio")
+          } catch (err) {
+            console.log("Using existing URL for first audio")
+          }
+          
+          // Play the first generated audio immediately after starter audio
+          await playAudio(urlToPlay)
+        }
+        
+        isFirstRecordingRef.current = false // Mark that we've played the starter audio
+      } else {
+        // For subsequent recordings, play the corresponding text input audio
+        console.log(`Attempting to play audio for recording ${recordingIndex + 1}`)
+        
+        if (textInputsRef.current.length > recordingIndex && 
+            textInputsRef.current[recordingIndex].audioUrl && 
+            textInputsRef.current[recordingIndex].audioKey) {
+          
+          console.log(`Playing recording ${recordingIndex + 1} audio:`, textInputsRef.current[recordingIndex].value)
+          
+          // Get a fresh presigned URL if we have the key (in case the old one expired)
+          let urlToPlay = textInputsRef.current[recordingIndex].audioUrl
+          try {
+            // Import the getPresignedUrl function
+            const { getPresignedUrl } = await import('@/lib/api-service')
+            urlToPlay = await getPresignedUrl(textInputsRef.current[recordingIndex].audioKey!)
+            console.log(`Got fresh presigned URL for recording ${recordingIndex + 1} audio`)
+          } catch (err) {
+            console.log(`Using existing URL for recording ${recordingIndex + 1} audio`)
+          }
+          
+          // Play the audio for this recording
+          await playAudio(urlToPlay)
+        } else {
+          console.warn(`No audio available for recording ${recordingIndex + 1}`)
+          if (textInputsRef.current.length > recordingIndex) {
+            console.log(`Text input exists but no audio: ${textInputsRef.current[recordingIndex].value}`)
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to play audio:', err)
     }
+  }
+  
+  // Start recording with a specific index (used by nextRecording)
+  const startRecordingWithIndex = async (recordingIndex: number, skipCountdown = false) => {
+    console.log(`Starting recording with explicit index: ${recordingIndex + 1}`)
     
     // Run countdown unless skipped
     if (!skipCountdown) {
@@ -143,44 +212,25 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
       mediaRecorder.start(1000) // Collect data in 1-second chunks
       setIsRecording(true)
 
-      // After recording has started, play the audio sequence
-      // Play starter audio if this is the first recording of the session
-      if (isFirstRecordingRef.current) {
-        try {
-          // First play the starter audio
-          await playAudio(getAudioPath())
-          
-          // Then play the first generated audio if available
-          if (textInputsRef.current.length > 0 && 
-              textInputsRef.current[0].audioUrl && 
-              textInputsRef.current[0].audioKey) {
-            
-            console.log("Playing first generated audio:", textInputsRef.current[0].value)
-            
-            // Get a fresh presigned URL if we have the key (in case the old one expired)
-            let urlToPlay = textInputsRef.current[0].audioUrl
-            try {
-              // Import the getPresignedUrl function
-              const { getPresignedUrl } = await import('@/lib/api-service')
-              urlToPlay = await getPresignedUrl(textInputsRef.current[0].audioKey!)
-              console.log("Got fresh presigned URL for first audio")
-            } catch (err) {
-              console.log("Using existing URL for first audio")
-            }
-            
-            // Play the first generated audio immediately after starter audio
-            await playAudio(urlToPlay)
-          }
-        } catch (err) {
-          console.error('Failed to play audio:', err)
-        }
-        
-        isFirstRecordingRef.current = false // Mark that we've played the audio
-      }
+      // After recording has started, play the appropriate audio for the specified index
+      await playAudioForRecording(recordingIndex)
+      
     } catch (err) {
       console.error("MediaRecorder error:", err)
       alert("Failed to start recording. Please try again. Error: " + (err as Error).message)
     }
+  }
+  
+  const startRecording = async (skipCountdown = false) => {
+    // Reset if starting a new session
+    if (isSessionComplete) {
+      setCurrentRecordingIndex(0)
+      setIsSessionComplete(false)
+      isFirstRecordingRef.current = true // Reset first recording flag
+    }
+    
+    // Use the current recording index
+    await startRecordingWithIndex(currentRecordingIndex, skipCountdown)
   }
 
   const stopRecording = () => {
@@ -195,15 +245,30 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
     
     // Move to the next recording index
     const nextIndex = currentRecordingIndex + 1
+    console.log(`Moving to next recording: ${nextIndex + 1} of ${totalRecordings}`)
+    console.log(`Text inputs available: ${textInputsRef.current.length}`)
+    
+    // Log the current text input that should be used for the next recording
+    if (textInputsRef.current.length > nextIndex) {
+      console.log(`Next text input (${nextIndex + 1}):`, textInputsRef.current[nextIndex].value)
+      console.log(`Next audio available:`, !!textInputsRef.current[nextIndex].audioUrl, !!textInputsRef.current[nextIndex].audioKey)
+    }
+    
+    // Update the current recording index state
     setCurrentRecordingIndex(nextIndex)
     
     // Check if we've reached the end of the session
     if (nextIndex >= totalRecordings) {
+      console.log("Session complete")
       setIsSessionComplete(true)
     } else {
       // Start the next recording with a small delay to ensure the previous one is processed
+      console.log(`Starting recording ${nextIndex + 1} in 500ms`)
+      
+      // We need to pass the nextIndex to startRecording to ensure it uses the correct index
+      // before the state update is reflected in currentRecordingIndex
       setTimeout(() => {
-        startRecording(false) // Start with countdown
+        startRecordingWithIndex(nextIndex, false) // Start with countdown and specify index
       }, 500)
     }
   }
