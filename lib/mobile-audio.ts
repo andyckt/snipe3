@@ -96,7 +96,7 @@ async function fetchAudio(url: string): Promise<AudioBuffer> {
  * @param url - The URL of the audio to play
  * @param volumeMultiplier - Volume multiplier (1.0 is normal, higher values increase volume)
  */
-export async function playMobileAudio(url: string, volumeMultiplier: number = 5.0): Promise<void> {
+export async function playMobileAudio(url: string, volumeMultiplier: number = 20.0): Promise<void> {
   // Make sure audio context is initialized
   if (!audioContext) {
     if (!initAudioContext()) {
@@ -106,6 +106,11 @@ export async function playMobileAudio(url: string, volumeMultiplier: number = 5.
   }
   
   try {
+    // Make sure we have a valid audio context
+    if (!audioContext) {
+      throw new Error('Audio context is null');
+    }
+    
     // Make sure the audio context is running
     if (audioContext.state === 'suspended') {
       await audioContext.resume();
@@ -121,13 +126,25 @@ export async function playMobileAudio(url: string, volumeMultiplier: number = 5.
     // Create a gain node to increase the volume
     const gainNode = audioContext.createGain();
     
+    // Create a compressor node to make the audio louder without distortion
+    const compressor = audioContext.createDynamicsCompressor();
+    
+    // Configure the compressor for maximum loudness
+    // These settings will make the audio as loud as possible while minimizing distortion
+    compressor.threshold.value = -50;  // Start compressing at a very low threshold
+    compressor.knee.value = 40;        // Smooth compression curve
+    compressor.ratio.value = 12;       // Heavy compression
+    compressor.attack.value = 0;       // Immediate attack
+    compressor.release.value = 0.25;   // Quick release
+    
     // Set the gain value to amplify the audio (be careful with very high values)
     // Values above 1.0 will amplify the sound
     gainNode.gain.value = volumeMultiplier;
-    console.log(`Setting audio gain to ${volumeMultiplier}x`);
+    console.log(`Setting audio gain to ${volumeMultiplier}x with compression`);
     
-    // Connect the source to the gain node, then to the destination
-    source.connect(gainNode);
+    // Connect the source to the compressor, then to the gain node, then to the destination
+    source.connect(compressor);
+    compressor.connect(gainNode);
     gainNode.connect(audioContext.destination);
     
     // Play the audio

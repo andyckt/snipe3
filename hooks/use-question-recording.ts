@@ -108,8 +108,8 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
         
         // First play the starter audio using mobile-friendly method with high volume
         try {
-          // Use a high volume multiplier (10.0) for maximum volume
-          await playMobileAudio(getAudioPath(), 10.0);
+          // Use an extremely high volume multiplier (30.0) for maximum volume
+          await playMobileAudio(getAudioPath(), 30.0);
           console.log("Starter audio played successfully at high volume");
         } catch (error) {
           console.error("Mobile audio playback failed, falling back to standard method:", error);
@@ -137,8 +137,8 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
           
           // Play the first generated audio immediately after starter audio with high volume
           try {
-            // Use a high volume multiplier (10.0) for maximum volume
-            await playMobileAudio(urlToPlay, 10.0);
+            // Use an extremely high volume multiplier (30.0) for maximum volume
+            await playMobileAudio(urlToPlay, 30.0);
             console.log("First generated audio played successfully at high volume");
           } catch (error) {
             console.error("Mobile audio playback failed, falling back to standard method:", error);
@@ -169,8 +169,8 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
           
           // Play the audio for this recording using mobile-friendly method with high volume
           try {
-            // Use a high volume multiplier (10.0) for maximum volume
-            await playMobileAudio(urlToPlay, 10.0);
+            // Use an extremely high volume multiplier (30.0) for maximum volume
+            await playMobileAudio(urlToPlay, 30.0);
             console.log(`Recording ${recordingIndex + 1} audio played successfully at high volume`);
           } catch (error) {
             console.error("Mobile audio playback failed, falling back to standard method:", error);
