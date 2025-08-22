@@ -260,7 +260,8 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
           clearInterval(recordingTimerRef.current);
         }
         
-        // Start countdown timer
+        // Start countdown timer with slightly longer interval (1050ms instead of 1000ms)
+        // to compensate for the timer running slightly fast
         recordingTimerRef.current = setInterval(() => {
           setRecordingTimeLeft(prev => {
             if (prev === null || prev <= 1) {
@@ -276,7 +277,7 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
             }
             return prev - 1;
           });
-        }, 1000);
+        }, 1050); // Increased from 1000ms to 1050ms to slow down the timer slightly
       }
       
     } catch (err) {
