@@ -162,6 +162,7 @@ export function useConversationRecording(streamRef: React.RefObject<MediaStream 
     totalRecordings,
     isLastRecording: currentRecordingIndex === totalRecordings - 1,
     isSessionComplete,
+    recordingTimeLeft: null, // Conversation mode doesn't use time limits
     startRecording,
     stopRecording,
     nextRecording,

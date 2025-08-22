@@ -2,11 +2,11 @@
 
 import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { QuestionTab, AudioLanguage, TextInput } from "./question-tab"
+import { QuestionTab, AudioLanguage, TextInput, TimeLimit } from "./question-tab"
 import { ConversationTab } from "./conversation-tab"
 
 interface SettingsScreenProps {
-  onLaunch: (numRecordings: number, language: AudioLanguage, textInputs: TextInput[], mode: "question" | "conversation") => void
+  onLaunch: (numRecordings: number, language: AudioLanguage, textInputs: TextInput[], mode: "question" | "conversation", timeLimit: TimeLimit) => void
 }
 
 export function SettingsScreen({ onLaunch }: SettingsScreenProps) {

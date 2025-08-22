@@ -3,7 +3,14 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { PlusCircle, MinusCircle, Volume2, Loader2, GripVertical } from "lucide-react"
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select"
+import { PlusCircle, MinusCircle, Volume2, Loader2, GripVertical, Clock } from "lucide-react"
 import { textToSpeechAndUpload, playAudio, getPresignedUrl } from "@/lib/api-service"
 import { unlockAudio } from "@/lib/audio"
 import { initAudioContext, playMobileAudio } from "@/lib/mobile-audio"
@@ -33,11 +40,15 @@ export interface TextInput {
   audioUrl?: string;  // S3 presigned URL
   audioKey?: string;  // S3 key for the audio file
   isGenerating?: boolean;
+  timeLimit?: TimeLimit; // Individual time limit for this question
   // No need to explicitly store order as the array index will determine order
 }
 
+// Time limit options for recordings
+export type TimeLimit = "no_limit" | "30_seconds" | "1_minute" | "2_minutes" | "3_minutes" | "5_minutes";
+
 interface QuestionTabProps {
-  onLaunch: (numRecordings: number, language: AudioLanguage, textInputs: TextInput[], mode: "question" | "conversation") => void;
+  onLaunch: (numRecordings: number, language: AudioLanguage, textInputs: TextInput[], mode: "question" | "conversation", timeLimit: TimeLimit) => void;
   language: AudioLanguage;
   onLanguageChange: (newLanguage: AudioLanguage) => void;
 }
@@ -46,6 +57,7 @@ interface QuestionTabProps {
 interface SortableTextInputProps {
   input: TextInput;
   onTextChange: (id: string, value: string) => void;
+  onTimeLimitChange: (id: string, timeLimit: TimeLimit) => void;
   onGenerateSpeech: (id: string, text: string) => void;
   onPlayAudio: (audioUrl?: string, audioKey?: string) => void;
   onRemove: (id: string) => void;
@@ -54,7 +66,8 @@ interface SortableTextInputProps {
 
 function SortableTextInput({ 
   input, 
-  onTextChange, 
+  onTextChange,
+  onTimeLimitChange,
   onGenerateSpeech, 
   onPlayAudio, 
   onRemove,
@@ -97,7 +110,35 @@ function SortableTextInput({
         className="flex-1"
       />
       
-      <div className="flex gap-1">
+      <div className="flex gap-1 items-center">
+        {/* Time limit select */}
+        <div className="flex items-center">
+          <Select
+            value={input.timeLimit || "no_limit"}
+            onValueChange={(value) => onTimeLimitChange(input.id, value as TimeLimit)}
+          >
+            <SelectTrigger className="h-8 px-2 py-1 text-xs gap-1">
+              <Clock size={14} className="text-gray-500" />
+              <SelectValue>
+                {input.timeLimit === "30_seconds" && "30s"}
+                {input.timeLimit === "1_minute" && "1m"}
+                {input.timeLimit === "2_minutes" && "2m"}
+                {input.timeLimit === "3_minutes" && "3m"}
+                {input.timeLimit === "5_minutes" && "5m"}
+                {(!input.timeLimit || input.timeLimit === "no_limit") && "No limit"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="no_limit">No limit</SelectItem>
+              <SelectItem value="30_seconds">30 seconds</SelectItem>
+              <SelectItem value="1_minute">1 minute</SelectItem>
+              <SelectItem value="2_minutes">2 minutes</SelectItem>
+              <SelectItem value="3_minutes">3 minutes</SelectItem>
+              <SelectItem value="5_minutes">5 minutes</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <Button
           onClick={() => {
             unlockAudio(); // Unlock audio on user interaction
@@ -137,7 +178,14 @@ function SortableTextInput({
 
 export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTabProps) {
   const [textInputs, setTextInputs] = useState<TextInput[]>([
-    { id: crypto.randomUUID(), value: '', audioUrl: undefined, audioKey: undefined, isGenerating: false }
+    { 
+      id: crypto.randomUUID(), 
+      value: '', 
+      audioUrl: undefined, 
+      audioKey: undefined, 
+      isGenerating: false,
+      timeLimit: "no_limit"
+    }
   ])
   
   // Try to unlock audio on component mount and on any user interaction
@@ -186,7 +234,8 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
       value: '',
       audioUrl: undefined,
       audioKey: undefined,
-      isGenerating: false
+      isGenerating: false,
+      timeLimit: "no_limit"
     }])
   }
   
@@ -200,6 +249,12 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
   const handleTextInputChange = (id: string, value: string) => {
     setTextInputs(prev => 
       prev.map(input => input.id === id ? { ...input, value } : input)
+    )
+  }
+  
+  const handleTimeLimitChange = (id: string, timeLimit: TimeLimit) => {
+    setTextInputs(prev => 
+      prev.map(input => input.id === id ? { ...input, timeLimit } : input)
     )
   }
   
@@ -329,6 +384,8 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
       
 
       
+
+      
       <div className="flex flex-col items-center mb-12 w-full">
         <h2 className="text-xl font-semibold mb-2">Custom Text Fields</h2>
         <p className="text-sm text-gray-500 mb-6 text-center">Each text field will correspond to one recording. Drag to reorder.</p>
@@ -348,6 +405,7 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
                   key={input.id}
                   input={input}
                   onTextChange={handleTextInputChange}
+                  onTimeLimitChange={handleTimeLimitChange}
                   onGenerateSpeech={generateSpeech}
                   onPlayAudio={handlePlayAudio}
                   onRemove={handleRemoveTextInput}
@@ -372,7 +430,7 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
           onClick={() => {
             unlockAudio(); // Unlock audio on user interaction
             initAudioContext(); // Initialize Web Audio API context
-            onLaunch(textInputs.length, language, textInputs, "question");
+            onLaunch(textInputs.length, language, textInputs, "question", "no_limit");
           }}
           className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-4 text-xl rounded-full"
         >

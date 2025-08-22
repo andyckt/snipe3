@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { CameraView } from "@/components/camera-view"
 import { CameraControls } from "@/components/camera-controls"
 import { SettingsScreen } from "@/components/settings-screen"
-import { AudioLanguage, TextInput } from "@/components/question-tab"
+import { AudioLanguage, TextInput, TimeLimit } from "@/components/question-tab"
 import { useCamera } from "@/hooks/use-camera"
 import { useQuestionRecording } from "@/hooks/use-question-recording"
 import { useConversationRecording } from "@/hooks/use-conversation-recording"
@@ -22,6 +22,7 @@ export default function CameraRecorder() {
   const [audioLanguage, setAudioLanguage] = useState<AudioLanguage>("english")
   const [textInputs, setTextInputs] = useState<TextInput[]>([{ id: "default", value: "" }])
   const [mode, setMode] = useState<"question" | "conversation">("question")
+  const [timeLimit, setTimeLimit] = useState<TimeLimit>("no_limit")
   
   // Try to unlock audio on component mount and on any user interaction
   useEffect(() => {
@@ -62,7 +63,8 @@ export default function CameraRecorder() {
   const questionRecording = useQuestionRecording(streamRef, { 
     totalRecordings: numRecordings, 
     audioLanguage,
-    textInputs // Pass the textInputs to the question recording hook
+    textInputs, // Pass the textInputs to the question recording hook
+    timeLimit // Pass the time limit setting
   })
   
   const conversationRecording = useConversationRecording(streamRef, { 
@@ -78,18 +80,20 @@ export default function CameraRecorder() {
     totalRecordings,
     isLastRecording,
     isSessionComplete,
+    recordingTimeLeft,
     startRecording, 
     nextRecording,
     completeSession
   } = mode === "question" ? questionRecording : conversationRecording
 
   // Handle launching the recorder with selected settings
-  const handleLaunch = (selectedNumRecordings: number, selectedLanguage: AudioLanguage, selectedTextInputs: TextInput[], selectedMode: "question" | "conversation") => {
+  const handleLaunch = (selectedNumRecordings: number, selectedLanguage: AudioLanguage, selectedTextInputs: TextInput[], selectedMode: "question" | "conversation", selectedTimeLimit: TimeLimit) => {
     // The number of recordings is now determined by the number of text inputs
     setNumRecordings(selectedTextInputs.length)
     setAudioLanguage(selectedLanguage)
     setTextInputs(selectedTextInputs)
     setMode(selectedMode)
+    setTimeLimit(selectedTimeLimit)
     setAppState("recording")
   }
 
@@ -139,7 +143,7 @@ export default function CameraRecorder() {
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-white md:bg-gray-100 md:items-center md:justify-center">
       <div className="flex flex-col h-full w-full bg-black md:max-w-sm md:h-screen">
-        <CameraView videoRef={videoRef} countdown={countdown} />
+        <CameraView videoRef={videoRef} countdown={countdown} recordingTimeLeft={recordingTimeLeft} />
 
         <CameraControls
           showPermissionButton={showPermissionButton}

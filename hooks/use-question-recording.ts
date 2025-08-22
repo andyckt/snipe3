@@ -17,10 +17,11 @@ interface RecordingOptions {
   totalRecordings?: number
   audioLanguage?: "english" | "mandarin"
   textInputs?: TextInput[] // Add textInputs to options
+  timeLimit?: "no_limit" | "one_minute" // Add time limit option
 }
 
 export function useQuestionRecording(streamRef: React.RefObject<MediaStream | null>, options: RecordingOptions = {}) {
-  const { totalRecordings = 1, audioLanguage = "english", textInputs = [] } = options
+  const { totalRecordings = 1, audioLanguage = "english", textInputs = [], timeLimit = "no_limit" } = options
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<Blob[]>([])
@@ -29,6 +30,8 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
   const [countdown, setCountdown] = useState<number | null>(null)
   const [currentRecordingIndex, setCurrentRecordingIndex] = useState(0)
   const [isSessionComplete, setIsSessionComplete] = useState(false)
+  const [recordingTimeLeft, setRecordingTimeLeft] = useState<number | null>(null)
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null)
   const startAudioRef = useRef<HTMLAudioElement | null>(null)
   const isFirstRecordingRef = useRef(true) // Track if this is the first recording in the session
   const textInputsRef = useRef<TextInput[]>(textInputs) // Store the text inputs for access during recording
@@ -229,6 +232,53 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
       // After recording has started, play the appropriate audio for the specified index
       await playAudioForRecording(recordingIndex)
       
+      // Get the current question's time limit if available
+      const currentQuestionTimeLimit = textInputsRef.current[recordingIndex]?.timeLimit || "no_limit";
+      
+      // Handle time limit if enabled
+      if (currentQuestionTimeLimit !== "no_limit") {
+        // Calculate time in seconds based on the selected time limit
+        let timeInSeconds = 60; // Default to 1 minute
+        
+        if (currentQuestionTimeLimit === "30_seconds") {
+          timeInSeconds = 30;
+        } else if (currentQuestionTimeLimit === "1_minute") {
+          timeInSeconds = 60;
+        } else if (currentQuestionTimeLimit === "2_minutes") {
+          timeInSeconds = 120;
+        } else if (currentQuestionTimeLimit === "3_minutes") {
+          timeInSeconds = 180;
+        } else if (currentQuestionTimeLimit === "5_minutes") {
+          timeInSeconds = 300;
+        }
+        
+        // Set initial time left
+        setRecordingTimeLeft(timeInSeconds);
+        
+        // Clear any existing timer
+        if (recordingTimerRef.current) {
+          clearInterval(recordingTimerRef.current);
+        }
+        
+        // Start countdown timer
+        recordingTimerRef.current = setInterval(() => {
+          setRecordingTimeLeft(prev => {
+            if (prev === null || prev <= 1) {
+              // Time's up - stop the recording and clear the interval
+              if (recordingTimerRef.current) {
+                clearInterval(recordingTimerRef.current);
+                recordingTimerRef.current = null;
+              }
+              
+              // Automatically move to the next recording
+              nextRecording();
+              return null;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
+      
     } catch (err) {
       console.error("MediaRecorder error:", err)
       alert("Failed to start recording. Please try again. Error: " + (err as Error).message)
@@ -248,6 +298,13 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
   }
 
   const stopRecording = () => {
+    // Clear the recording timer if it exists
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current)
+      recordingTimerRef.current = null
+      setRecordingTimeLeft(null)
+    }
+    
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop()
     }
@@ -287,6 +344,7 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
     totalRecordings,
     isLastRecording: currentRecordingIndex === totalRecordings - 1,
     isSessionComplete,
+    recordingTimeLeft,
     startRecording,
     stopRecording,
     nextRecording,
