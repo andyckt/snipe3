@@ -11,9 +11,10 @@ import { useConversationRecording } from "@/hooks/use-conversation-recording"
 import { Button } from "@/components/ui/button"
 import { unlockAudio } from "@/lib/audio"
 import { initAudioContext } from "@/lib/mobile-audio"
+import PersonalDetailsCollector, { PersonalDetailField, PersonalDetailsConfig, PersonalDetailsResponse } from "@/components/personal-details-collector"
 
 // App states
-type AppState = "settings" | "recording" | "completed"
+type AppState = "settings" | "personal_details" | "recording" | "completed"
 
 export default function CameraRecorder() {
   // State management
@@ -23,6 +24,17 @@ export default function CameraRecorder() {
   const [textInputs, setTextInputs] = useState<TextInput[]>([{ id: "default", value: "" }])
   const [mode, setMode] = useState<"question" | "conversation">("question")
   const [timeLimit, setTimeLimit] = useState<TimeLimit>("no_limit")
+  
+  // Personal details configuration and responses
+  const [personalDetailsConfig, setPersonalDetailsConfig] = useState<PersonalDetailsConfig>({
+    includePersonalDetails: true,
+    personalFields: [
+      { id: "name", label: "What is your full name?", type: "text", required: true },
+      { id: "email", label: "What is your email address?", type: "text", required: true },
+      { id: "role", label: "What is your role?", type: "dropdown", required: true, dropdownOptions: ["Student", "Teacher", "Professional", "Other"] }
+    ]
+  })
+  const [personalDetailsResponses, setPersonalDetailsResponses] = useState<PersonalDetailsResponse>({})
   
   // Try to unlock audio on component mount and on any user interaction
   useEffect(() => {
@@ -68,7 +80,8 @@ export default function CameraRecorder() {
   })
   
   const conversationRecording = useConversationRecording(streamRef, { 
-    totalRecordings: numRecordings
+    totalRecordings: numRecordings,
+    timeLimit: timeLimit
   })
   
   // Select the appropriate recording hook based on mode
@@ -94,6 +107,19 @@ export default function CameraRecorder() {
     setTextInputs(selectedTextInputs)
     setMode(selectedMode)
     setTimeLimit(selectedTimeLimit)
+    
+    // Go to personal details collection first
+    setAppState("personal_details")
+  }
+  
+  // Handle completion of personal details
+  const handlePersonalDetailsComplete = (responses: PersonalDetailsResponse) => {
+    setPersonalDetailsResponses(responses)
+    setAppState("recording")
+  }
+  
+  // Handle skipping personal details
+  const handlePersonalDetailsSkip = () => {
     setAppState("recording")
   }
 
@@ -120,7 +146,25 @@ export default function CameraRecorder() {
     return (
       <div className="flex flex-col h-screen w-full overflow-hidden bg-white md:bg-gray-100 md:items-center md:justify-center">
         <div className="flex flex-col h-full w-full bg-white md:max-w-sm md:h-screen">
-          <SettingsScreen onLaunch={handleLaunch} />
+          <SettingsScreen 
+            onLaunch={handleLaunch} 
+            personalDetailsConfig={personalDetailsConfig}
+            onPersonalDetailsConfigChange={setPersonalDetailsConfig}
+          />
+        </div>
+      </div>
+    )
+  }
+  
+  if (appState === "personal_details") {
+    return (
+      <div className="flex flex-col h-screen w-full overflow-hidden bg-white md:bg-gray-100 md:items-center md:justify-center">
+        <div className="flex flex-col h-full w-full bg-white md:max-w-sm md:h-screen">
+          <PersonalDetailsCollector 
+            config={personalDetailsConfig}
+            onComplete={handlePersonalDetailsComplete}
+            onSkip={handlePersonalDetailsSkip}
+          />
         </div>
       </div>
     )

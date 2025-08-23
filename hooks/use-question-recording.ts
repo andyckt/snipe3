@@ -11,13 +11,13 @@ import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { preloadAudio, playAudio } from "@/lib/audio"
 import { initAudioContext, playMobileAudio, preloadMobileAudio } from "@/lib/mobile-audio"
-import { TextInput } from "@/components/question-tab"
+import { TextInput, TimeLimit } from "@/components/question-tab"
 
 interface RecordingOptions {
   totalRecordings?: number
   audioLanguage?: "english" | "mandarin"
   textInputs?: TextInput[] // Add textInputs to options
-  timeLimit?: "no_limit" | "one_minute" // Add time limit option
+  timeLimit?: TimeLimit // Add time limit option
 }
 
 export function useQuestionRecording(streamRef: React.RefObject<MediaStream | null>, options: RecordingOptions = {}) {
@@ -233,7 +233,7 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
       await playAudioForRecording(recordingIndex)
       
       // Get the current question's time limit if available
-      const currentQuestionTimeLimit = textInputsRef.current[recordingIndex]?.timeLimit || "no_limit";
+      const currentQuestionTimeLimit = textInputsRef.current[recordingIndex]?.timeLimit || timeLimit || "no_limit";
       
       // Handle time limit if enabled
       if (currentQuestionTimeLimit !== "no_limit") {

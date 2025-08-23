@@ -9,10 +9,12 @@
 import type React from "react"
 
 import { useRef, useState } from "react"
+import { TimeLimit } from "@/components/question-tab"
 
 interface RecordingOptions {
   totalRecordings?: number
   audioLanguage?: "english" | "mandarin"
+  timeLimit?: TimeLimit
 }
 
 export function useConversationRecording(streamRef: React.RefObject<MediaStream | null>, options: RecordingOptions = {}) {
