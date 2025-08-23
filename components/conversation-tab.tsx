@@ -1,5 +1,11 @@
 "use client"
 
+/**
+ * NOTE: This component is temporarily disabled and not in use.
+ * The conversation mode will be implemented in a future update.
+ * This file is kept for reference but is currently commented out in the UI.
+ */
+
 import { Button } from "@/components/ui/button"
 import { AudioLanguage, TextInput, TimeLimit } from "./question-tab"
 import { unlockAudio } from "@/lib/audio"

@@ -30,9 +30,10 @@ export function SettingsScreen({ onLaunch, personalDetailsConfig, onPersonalDeta
         className="w-full max-w-md mb-8"
         onValueChange={(value) => setActiveTab(value as "question" | "conversation" | "personal_details")}
       >
-        <TabsList className="grid w-full grid-cols-3 mb-8">
+        <TabsList className="grid w-full grid-cols-2 mb-8">
           <TabsTrigger value="question">By Question</TabsTrigger>
-          <TabsTrigger value="conversation">By Conversation</TabsTrigger>
+          {/* Conversation mode temporarily disabled until future implementation */}
+          {/* <TabsTrigger value="conversation">By Conversation</TabsTrigger> */}
           <TabsTrigger value="personal_details">Personal Details</TabsTrigger>
         </TabsList>
         
@@ -44,9 +45,11 @@ export function SettingsScreen({ onLaunch, personalDetailsConfig, onPersonalDeta
           />
         </TabsContent>
         
+        {/* Conversation mode temporarily disabled until future implementation
         <TabsContent value="conversation" className="w-full">
           <ConversationTab onLaunch={onLaunch} language={language} />
         </TabsContent>
+        */}
         
         <TabsContent value="personal_details" className="w-full">
           <div className="mb-8">
