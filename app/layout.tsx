@@ -3,7 +3,6 @@ import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import "./globals.css"
-import { ErrorBoundary } from "@/components/error-boundary"
 
 export const metadata: Metadata = {
   title: "Camera Recorder",
@@ -28,11 +27,7 @@ html {
 }
         `}</style>
       </head>
-      <body className="overflow-hidden">
-        <ErrorBoundary>
-          {children}
-        </ErrorBoundary>
-      </body>
+      <body className="overflow-hidden">{children}</body>
     </html>
   )
 }
