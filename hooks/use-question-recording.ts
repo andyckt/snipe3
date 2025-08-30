@@ -111,8 +111,8 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
         
         // First play the starter audio using mobile-friendly method with volume boost
         try {
-          // Apply a volume boost of 2.5 to compensate for the automatic volume reduction during recording
-          await playMobileAudio(getAudioPath(), 2.5);
+          // Apply a volume boost of 4.0 to compensate for the automatic volume reduction during recording
+          await playMobileAudio(getAudioPath(), 4.0);
           console.log("Starter audio played successfully with volume boost");
         } catch (error) {
           console.error("Mobile audio playback failed, falling back to standard method:", error);
@@ -140,8 +140,8 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
           
           // Play the first generated audio immediately after starter audio with volume boost
           try {
-            // Apply a volume boost of 2.5 to compensate for the automatic volume reduction during recording
-            await playMobileAudio(urlToPlay, 2.5);
+            // Apply a volume boost of 4.0 to compensate for the automatic volume reduction during recording
+            await playMobileAudio(urlToPlay, 4.0);
             console.log("First generated audio played successfully with volume boost");
           } catch (error) {
             console.error("Mobile audio playback failed, falling back to standard method:", error);
@@ -172,8 +172,8 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
           
           // Play the audio for this recording using mobile-friendly method with volume boost
           try {
-            // Apply a volume boost of 2.5 to compensate for the automatic volume reduction during recording
-            await playMobileAudio(urlToPlay, 2.5);
+            // Apply a volume boost of 4.0 to compensate for the automatic volume reduction during recording
+            await playMobileAudio(urlToPlay, 4.0);
             console.log(`Recording ${recordingIndex + 1} audio played successfully with volume boost`);
           } catch (error) {
             console.error("Mobile audio playback failed, falling back to standard method:", error);
