@@ -93,8 +93,10 @@ async function fetchAudio(url: string): Promise<AudioBuffer> {
 
 /**
  * Play audio from a URL using Web Audio API (mobile-friendly)
+ * @param url The URL of the audio to play
+ * @param volumeBoost Optional volume boost factor (1.0 = normal, >1.0 = louder)
  */
-export async function playMobileAudio(url: string): Promise<void> {
+export async function playMobileAudio(url: string, volumeBoost: number = 1.0): Promise<void> {
   // Make sure audio context is initialized
   if (!audioContext) {
     if (!initAudioContext()) {
@@ -104,6 +106,11 @@ export async function playMobileAudio(url: string): Promise<void> {
   }
   
   try {
+    // Ensure audioContext is not null (we've already checked above, but this is for TypeScript)
+    if (!audioContext) {
+      throw new Error('AudioContext is null');
+    }
+    
     // Make sure the audio context is running
     if (audioContext.state === 'suspended') {
       await audioContext.resume();
@@ -116,8 +123,17 @@ export async function playMobileAudio(url: string): Promise<void> {
     const source = audioContext.createBufferSource();
     source.buffer = audioBuffer;
     
-    // Connect to destination (speakers)
-    source.connect(audioContext.destination);
+    // Create a gain node for volume control
+    const gainNode = audioContext.createGain();
+    
+    // Set gain value (volume)
+    // During recording, mobile devices often reduce volume, so we boost it
+    // Default is 1.0, higher values increase volume
+    gainNode.gain.value = volumeBoost;
+    
+    // Connect source -> gain -> destination
+    source.connect(gainNode);
+    gainNode.connect(audioContext.destination);
     
     // Play the audio
     source.start(0);
