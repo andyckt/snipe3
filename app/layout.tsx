@@ -3,12 +3,13 @@ import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import "./globals.css"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 export const metadata: Metadata = {
   title: "Camera Recorder",
   description: "Mobile-first camera recording app",
   generator: "v0.app",
-  viewport: "width=device-width, initial-scale=1.0",
+  viewport: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no",
 }
 
 export default function RootLayout({
@@ -27,7 +28,11 @@ html {
 }
         `}</style>
       </head>
-      <body className="overflow-hidden">{children}</body>
+      <body className="overflow-hidden">
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
+      </body>
     </html>
   )
 }
