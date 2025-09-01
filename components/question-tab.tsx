@@ -434,7 +434,7 @@ export function QuestionTab({ onLaunch, language, onLanguageChange }: QuestionTa
           }}
           className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-4 text-xl rounded-full"
         >
-          Launch Recorder
+          Create Now
         </Button>
       </div>
     </div>
