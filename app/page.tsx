@@ -17,6 +17,9 @@ import PersonalDetailsCollector, { PersonalDetailField, PersonalDetailsConfig, P
 type AppState = "settings" | "personal_details" | "recording" | "completed"
 
 export default function CameraRecorder() {
+  // Check for URL parameters on initial load
+  const [initialParamsChecked, setInitialParamsChecked] = useState(false)
+  
   // State management
   const [appState, setAppState] = useState<AppState>("settings")
   const [numRecordings, setNumRecordings] = useState(3)
@@ -35,6 +38,55 @@ export default function CameraRecorder() {
     ]
   })
   const [personalDetailsResponses, setPersonalDetailsResponses] = useState<PersonalDetailsResponse>({})
+  
+  // Parse URL parameters on initial load
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !initialParamsChecked) {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramsData = urlParams.get('data');
+        
+        if (paramsData) {
+          // Decode and parse the data
+          const decodedData = decodeURIComponent(paramsData);
+          const parsedData = JSON.parse(decodedData);
+          
+          // Apply the settings from URL parameters
+          if (parsedData.numRecordings) setNumRecordings(parsedData.numRecordings);
+          if (parsedData.audioLanguage) setAudioLanguage(parsedData.audioLanguage);
+          
+          // Handle text inputs and their audio URLs/keys
+          if (parsedData.textInputs) {
+            // Make sure we refresh presigned URLs if needed
+            const refreshedTextInputs = [...parsedData.textInputs];
+            setTextInputs(refreshedTextInputs);
+            
+            // Preload audio for better performance
+            refreshedTextInputs.forEach(input => {
+              if (input.audioUrl) {
+                import('@/lib/mobile-audio').then(({ preloadMobileAudio }) => {
+                  preloadMobileAudio(input.audioUrl!).catch(err => 
+                    console.warn(`Failed to preload audio: ${err}`)
+                  );
+                });
+              }
+            });
+          }
+          
+          if (parsedData.mode) setMode(parsedData.mode);
+          if (parsedData.timeLimit) setTimeLimit(parsedData.timeLimit);
+          if (parsedData.personalDetailsConfig) setPersonalDetailsConfig(parsedData.personalDetailsConfig);
+          
+          // Set initial app state based on URL parameters
+          setAppState(parsedData.personalDetailsConfig?.includePersonalDetails ? "personal_details" : "recording");
+        }
+      } catch (error) {
+        console.error("Error parsing URL parameters:", error);
+      }
+      
+      setInitialParamsChecked(true);
+    }
+  }, [initialParamsChecked]);
   
   // Try to unlock audio on component mount and on any user interaction
   useEffect(() => {
@@ -101,15 +153,24 @@ export default function CameraRecorder() {
 
   // Handle launching the recorder with selected settings
   const handleLaunch = (selectedNumRecordings: number, selectedLanguage: AudioLanguage, selectedTextInputs: TextInput[], selectedMode: "question" | "conversation", selectedTimeLimit: TimeLimit) => {
-    // The number of recordings is now determined by the number of text inputs
-    setNumRecordings(selectedTextInputs.length)
-    setAudioLanguage(selectedLanguage)
-    setTextInputs(selectedTextInputs)
-    setMode(selectedMode)
-    setTimeLimit(selectedTimeLimit)
+    // Create a data object with all the settings
+    const launchData = {
+      numRecordings: selectedTextInputs.length,
+      audioLanguage: selectedLanguage,
+      textInputs: selectedTextInputs,
+      mode: selectedMode,
+      timeLimit: selectedTimeLimit,
+      personalDetailsConfig: personalDetailsConfig
+    };
     
-    // Go to personal details collection first
-    setAppState("personal_details")
+    // Convert the data object to a JSON string and encode it for URL
+    const encodedData = encodeURIComponent(JSON.stringify(launchData));
+    
+    // Create the URL for the new tab
+    const url = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
+    
+    // Open the URL in a new tab
+    window.open(url, '_blank');
   }
   
   // Handle completion of personal details
