@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { CameraView } from "@/components/camera-view"
 import { CameraControls } from "@/components/camera-controls"
-import { SettingsScreen } from "@/components/settings-screen"
 import { AudioLanguage, TextInput, TimeLimit } from "@/components/question-tab"
 import { useCamera } from "@/hooks/use-camera"
 import { useQuestionRecording } from "@/hooks/use-question-recording"
@@ -14,14 +13,14 @@ import { initAudioContext } from "@/lib/mobile-audio"
 import PersonalDetailsCollector, { PersonalDetailField, PersonalDetailsConfig, PersonalDetailsResponse } from "@/components/personal-details-collector"
 
 // App states
-type AppState = "settings" | "personal_details" | "recording" | "completed"
+type AppState = "personal_details" | "recording" | "completed"
 
-export default function CameraRecorder() {
+export default function SnipePage() {
   // Check for URL parameters on initial load
   const [initialParamsChecked, setInitialParamsChecked] = useState(false)
   
   // State management
-  const [appState, setAppState] = useState<AppState>("settings")
+  const [appState, setAppState] = useState<AppState>("personal_details")
   const [numRecordings, setNumRecordings] = useState(3)
   const [audioLanguage, setAudioLanguage] = useState<AudioLanguage>("english")
   const [textInputs, setTextInputs] = useState<TextInput[]>([{ id: "default", value: "" }])
@@ -79,9 +78,14 @@ export default function CameraRecorder() {
           
           // Set initial app state based on URL parameters
           setAppState(parsedData.personalDetailsConfig?.includePersonalDetails ? "personal_details" : "recording");
+        } else {
+          // If no data is provided, redirect to the main page
+          window.location.href = '/';
         }
       } catch (error) {
         console.error("Error parsing URL parameters:", error);
+        // If there's an error, redirect to the main page
+        window.location.href = '/';
       }
       
       setInitialParamsChecked(true);
@@ -151,28 +155,6 @@ export default function CameraRecorder() {
     completeSession
   } = mode === "question" ? questionRecording : conversationRecording
 
-  // Handle launching the recorder with selected settings
-  const handleLaunch = (selectedNumRecordings: number, selectedLanguage: AudioLanguage, selectedTextInputs: TextInput[], selectedMode: "question" | "conversation", selectedTimeLimit: TimeLimit) => {
-    // Create a data object with all the settings
-    const launchData = {
-      numRecordings: selectedTextInputs.length,
-      audioLanguage: selectedLanguage,
-      textInputs: selectedTextInputs,
-      mode: selectedMode,
-      timeLimit: selectedTimeLimit,
-      personalDetailsConfig: personalDetailsConfig
-    };
-    
-    // Convert the data object to a JSON string and encode it for URL
-    const encodedData = encodeURIComponent(JSON.stringify(launchData));
-    
-    // Create the URL for the new tab with /snipe path
-    const url = `${window.location.origin}/snipe?data=${encodedData}`;
-    
-    // Open the URL in a new tab
-    window.open(url, '_blank');
-  }
-  
   // Handle completion of personal details
   const handlePersonalDetailsComplete = (responses: PersonalDetailsResponse) => {
     setPersonalDetailsResponses(responses)
@@ -203,20 +185,6 @@ export default function CameraRecorder() {
   }
 
   // Render based on current app state
-  if (appState === "settings") {
-    return (
-      <div className="flex flex-col h-screen w-full overflow-hidden bg-white md:bg-gray-100 md:items-center md:justify-center">
-        <div className="flex flex-col h-full w-full bg-white md:max-w-sm md:h-screen">
-          <SettingsScreen 
-            onLaunch={handleLaunch} 
-            personalDetailsConfig={personalDetailsConfig}
-            onPersonalDetailsConfigChange={setPersonalDetailsConfig}
-          />
-        </div>
-      </div>
-    )
-  }
-  
   if (appState === "personal_details") {
     return (
       <div className="flex flex-col h-screen w-full overflow-hidden bg-white md:bg-gray-100 md:items-center md:justify-center">
