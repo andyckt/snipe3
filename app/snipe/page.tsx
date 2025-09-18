@@ -110,14 +110,25 @@ export default function SnipePage() {
       document.removeEventListener('touchend', unlockOnUserInteraction);
     };
     
+    // Add listener for custom completion event
+    const handleSessionComplete = () => {
+      console.log("Received session complete event - forcing transition to completed state");
+      stopCamera(); // Stop the camera
+      setAppState("completed"); // Force transition to completed state
+    };
+    
+    // Add event listeners
     document.addEventListener('click', unlockOnUserInteraction);
     document.addEventListener('touchstart', unlockOnUserInteraction);
     document.addEventListener('touchend', unlockOnUserInteraction);
+    window.addEventListener('recordingSessionComplete', handleSessionComplete);
     
     return () => {
+      // Clean up all event listeners
       document.removeEventListener('click', unlockOnUserInteraction);
       document.removeEventListener('touchstart', unlockOnUserInteraction);
       document.removeEventListener('touchend', unlockOnUserInteraction);
+      window.removeEventListener('recordingSessionComplete', handleSessionComplete);
     };
   }, [])
   

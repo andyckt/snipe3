@@ -162,12 +162,33 @@ export function useConversationRecording(streamRef: React.RefObject<MediaStream 
               // Force completion if this is the last recording
               if (currentRecordingIndex === totalRecordings - 1) {
                 // This is the last recording (with "Done" button)
-                // Stop recording and force session completion
-                stopRecording();
-                setIsSessionComplete(true);
                 
-                // Log for debugging
-                console.log("Time limit reached on last recording - forcing session completion");
+                // Stop recording
+                if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+                  mediaRecorderRef.current.stop();
+                }
+                
+                // Clear any timers
+                if (recordingTimerRef.current) {
+                  clearInterval(recordingTimerRef.current);
+                  recordingTimerRef.current = null;
+                }
+                
+                // Force session completion with a small delay to ensure recording is processed
+                setTimeout(() => {
+                  setIsSessionComplete(true);
+                  console.log("Time limit reached on last recording - forcing session completion");
+                  
+                  // Force app state transition directly
+                  if (typeof window !== 'undefined') {
+                    // Add a class to the body to signal completion
+                    document.body.classList.add('recording-complete');
+                    
+                    // Dispatch a custom event that the main component can listen for
+                    const event = new CustomEvent('recordingSessionComplete');
+                    window.dispatchEvent(event);
+                  }
+                }, 500);
               } else {
                 // For non-last recordings, move to next
                 nextRecording();
