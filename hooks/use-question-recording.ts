@@ -274,8 +274,14 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
                 recordingTimerRef.current = null;
               }
               
-              // Automatically move to the next recording
-              nextRecording();
+              // Check if this is the last recording
+              if (currentRecordingIndex === totalRecordings - 1) {
+                // If it's the last recording, complete the session
+                completeSession();
+              } else {
+                // Otherwise, move to the next recording
+                nextRecording();
+              }
               return null;
             }
             return prev - 1;

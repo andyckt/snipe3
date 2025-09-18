@@ -18,7 +18,7 @@ interface RecordingOptions {
 }
 
 export function useConversationRecording(streamRef: React.RefObject<MediaStream | null>, options: RecordingOptions = {}) {
-  const { totalRecordings = 1 } = options
+  const { totalRecordings = 1, timeLimit = "no_limit" } = options
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<Blob[]>([])
@@ -27,6 +27,8 @@ export function useConversationRecording(streamRef: React.RefObject<MediaStream 
   const [countdown, setCountdown] = useState<number | null>(null)
   const [currentRecordingIndex, setCurrentRecordingIndex] = useState(0)
   const [isSessionComplete, setIsSessionComplete] = useState(false)
+  const [recordingTimeLeft, setRecordingTimeLeft] = useState<number | null>(null)
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null)
   
   const runCountdown = async () => {
     setIsCountingDown(true)
@@ -120,6 +122,57 @@ export function useConversationRecording(streamRef: React.RefObject<MediaStream 
       // Start recording
       mediaRecorder.start(1000) // Collect data in 1-second chunks
       setIsRecording(true)
+      
+      // Handle time limit if enabled
+      if (timeLimit !== "no_limit") {
+        // Calculate time in seconds based on the selected time limit
+        let timeInSeconds = 60; // Default to 1 minute
+        
+        if (timeLimit === "30_seconds") {
+          timeInSeconds = 30;
+        } else if (timeLimit === "1_minute") {
+          timeInSeconds = 60;
+        } else if (timeLimit === "2_minutes") {
+          timeInSeconds = 120;
+        } else if (timeLimit === "3_minutes") {
+          timeInSeconds = 180;
+        } else if (timeLimit === "5_minutes") {
+          timeInSeconds = 300;
+        }
+        
+        // Set initial time left
+        setRecordingTimeLeft(timeInSeconds);
+        
+        // Clear any existing timer
+        if (recordingTimerRef.current) {
+          clearInterval(recordingTimerRef.current);
+        }
+        
+        // Start countdown timer with slightly longer interval (1050ms instead of 1000ms)
+        // to compensate for the timer running slightly fast
+        recordingTimerRef.current = setInterval(() => {
+          setRecordingTimeLeft(prev => {
+            if (prev === null || prev <= 1) {
+              // Time's up - stop the recording and clear the interval
+              if (recordingTimerRef.current) {
+                clearInterval(recordingTimerRef.current);
+                recordingTimerRef.current = null;
+              }
+              
+              // Check if this is the last recording
+              if (currentRecordingIndex === totalRecordings - 1) {
+                // If it's the last recording, complete the session
+                completeSession();
+              } else {
+                // Otherwise, move to the next recording
+                nextRecording();
+              }
+              return null;
+            }
+            return prev - 1;
+          });
+        }, 1050); // Increased from 1000ms to 1050ms to slow down the timer slightly
+      }
     } catch (err) {
       console.error("MediaRecorder error:", err)
       alert("Failed to start recording. Please try again. Error: " + (err as Error).message)
@@ -127,6 +180,13 @@ export function useConversationRecording(streamRef: React.RefObject<MediaStream 
   }
 
   const stopRecording = () => {
+    // Clear the recording timer if it exists
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current)
+      recordingTimerRef.current = null
+      setRecordingTimeLeft(null)
+    }
+    
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop()
     }
@@ -164,7 +224,7 @@ export function useConversationRecording(streamRef: React.RefObject<MediaStream 
     totalRecordings,
     isLastRecording: currentRecordingIndex === totalRecordings - 1,
     isSessionComplete,
-    recordingTimeLeft: null, // Conversation mode doesn't use time limits
+    recordingTimeLeft,
     startRecording,
     stopRecording,
     nextRecording,
