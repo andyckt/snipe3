@@ -17,7 +17,7 @@ interface RecordingOptions {
   totalRecordings?: number
   audioLanguage?: "english" | "mandarin"
   textInputs?: TextInput[] // Add textInputs to options
-  timeLimit?: "no_limit" | "one_minute" // Add time limit option
+  timeLimit?: "no_limit" | "30_seconds" | "1_minute" | "2_minutes" | "3_minutes" | "5_minutes" // Add time limit option
 }
 
 export function useQuestionRecording(streamRef: React.RefObject<MediaStream | null>, options: RecordingOptions = {}) {
@@ -237,6 +237,8 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
       
       // Handle time limit if enabled
       if (currentQuestionTimeLimit !== "no_limit") {
+        console.log(`[startRecordingWithIndex] Time limit enabled: ${currentQuestionTimeLimit} for recording ${recordingIndex + 1}/${totalRecordings}`)
+        
         // Calculate time in seconds based on the selected time limit
         let timeInSeconds = 60; // Default to 1 minute
         
@@ -252,29 +254,53 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
           timeInSeconds = 300;
         }
         
+        console.log(`[startRecordingWithIndex] Setting time limit to ${timeInSeconds} seconds`)
+        
         // Set initial time left
         setRecordingTimeLeft(timeInSeconds);
         
         // Clear any existing timer
         if (recordingTimerRef.current) {
+          console.log(`[startRecordingWithIndex] Clearing existing timer`)
           clearInterval(recordingTimerRef.current);
         }
         
         // Start countdown timer with slightly longer interval (1050ms instead of 1000ms)
         // to compensate for the timer running slightly fast
+        console.log(`[startRecordingWithIndex] Starting countdown timer for ${timeInSeconds} seconds`)
         recordingTimerRef.current = setInterval(() => {
           setRecordingTimeLeft(prev => {
-            if (prev === null || prev <= 1) {
-              // Time's up - stop the recording and clear the interval
+            if (prev === null) {
+              console.log(`[timerCallback] Timer value is null, stopping timer`)
               if (recordingTimerRef.current) {
+                clearInterval(recordingTimerRef.current);
+                recordingTimerRef.current = null;
+              }
+              return null;
+            }
+            
+            if (prev <= 1) {
+              // Time's up - stop the recording and clear the interval
+              console.log(`[timerCallback] Time's up! Recording ${currentRecordingIndex + 1}/${totalRecordings} complete`)
+              console.log(`[timerCallback] isLastRecording: ${currentRecordingIndex === totalRecordings - 1}`)
+              
+              if (recordingTimerRef.current) {
+                console.log(`[timerCallback] Clearing timer interval`)
                 clearInterval(recordingTimerRef.current);
                 recordingTimerRef.current = null;
               }
               
               // Automatically move to the next recording
+              console.log(`[timerCallback] Calling nextRecording() due to time limit expiration`)
               nextRecording();
               return null;
             }
+            
+            // Log every 5 seconds for less verbose output
+            if (prev % 5 === 0) {
+              console.log(`[timerCallback] Time left: ${prev} seconds`)
+            }
+            
             return prev - 1;
           });
         }, 1050); // Increased from 1000ms to 1050ms to slow down the timer slightly
@@ -299,42 +325,57 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
   }
 
   const stopRecording = () => {
+    console.log(`[stopRecording] Stopping recording at index: ${currentRecordingIndex}`)
+    
     // Clear the recording timer if it exists
     if (recordingTimerRef.current) {
+      console.log(`[stopRecording] Clearing timer interval`)
       clearInterval(recordingTimerRef.current)
       recordingTimerRef.current = null
       setRecordingTimeLeft(null)
     }
     
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      console.log(`[stopRecording] Stopping MediaRecorder`)
       mediaRecorderRef.current.stop()
+    } else {
+      console.log(`[stopRecording] MediaRecorder already inactive or null`)
     }
   }
   
   const nextRecording = async () => {
+    console.log(`[nextRecording] Starting - Current index: ${currentRecordingIndex}, Total recordings: ${totalRecordings}`)
+    
     // Stop the current recording
     stopRecording()
     
     // Move to the next recording index
     const nextIndex = currentRecordingIndex + 1
+    console.log(`[nextRecording] Incremented to index: ${nextIndex}`)
     
     // Update the current recording index state
     setCurrentRecordingIndex(nextIndex)
     
     // Check if we've reached the end of the session
     if (nextIndex >= totalRecordings) {
+      console.log(`[nextRecording] End of session reached (index ${nextIndex} >= total ${totalRecordings})`)
+      console.log(`[nextRecording] Setting isSessionComplete to true and returning early`)
       setIsSessionComplete(true)
       return // Early return to prevent starting another recording when session is complete
     } else {
+      console.log(`[nextRecording] More recordings to go (index ${nextIndex} < total ${totalRecordings})`)
       // Start the next recording with a small delay to ensure the previous one is processed
       setTimeout(() => {
+        console.log(`[nextRecording] Starting recording at index: ${nextIndex}`)
         startRecordingWithIndex(nextIndex, false) // Start with countdown and specify index
       }, 500)
     }
   }
   
   const completeSession = () => {
+    console.log(`[completeSession] Called - Current index: ${currentRecordingIndex}, Total recordings: ${totalRecordings}`)
     stopRecording()
+    console.log(`[completeSession] Setting isSessionComplete to true`)
     setIsSessionComplete(true)
   }
 

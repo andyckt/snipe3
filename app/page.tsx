@@ -108,8 +108,10 @@ export default function CameraRecorder() {
 
   // Handle session completion
   if (isSessionComplete) {
+    console.log(`[CameraRecorder] Session complete detected! Mode: ${mode}, Recordings: ${numRecordings}`)
     // Stop the camera and transition to completed state
     setTimeout(() => {
+      console.log(`[CameraRecorder] Stopping camera and transitioning to completed state`)
       stopCamera() // Stop the camera when recordings are complete
       setAppState("completed")
     }, 100)
