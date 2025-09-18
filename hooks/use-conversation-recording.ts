@@ -141,6 +141,7 @@ export function useConversationRecording(streamRef: React.RefObject<MediaStream 
     // Check if we've reached the end of the session
     if (nextIndex >= totalRecordings) {
       setIsSessionComplete(true)
+      return // Early return to prevent starting another recording when session is complete
     } else {
       // Start the next recording with a small delay to ensure the previous one is processed
       setTimeout(() => {
