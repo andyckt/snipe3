@@ -189,8 +189,18 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
   
   // Start recording with a specific index (used by nextRecording)
   const startRecordingWithIndex = async (recordingIndex: number, skipCountdown = false) => {
+    console.log(`[DEBUG] startRecordingWithIndex called with index: ${recordingIndex}, skipCountdown: ${skipCountdown}`);
+    console.log(`[DEBUG] Current state - isRecording: ${isRecording}, isCountingDown: ${isCountingDown}, isSessionComplete: ${isSessionComplete}`);
+    
+    // Check if we should prevent further recordings
+    if (window._preventFurtherRecording) {
+      console.log(`[DEBUG] Preventing further recording attempts due to _preventFurtherRecording flag`);
+      return;
+    }
+    
     // Run countdown unless skipped
     if (!skipCountdown) {
+      console.log(`[DEBUG] Starting countdown`);
       await runCountdown()
     }
 
@@ -277,35 +287,53 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
               // Force completion if this is the last recording
               if (currentRecordingIndex === totalRecordings - 1) {
                 // This is the last recording (with "Done" button)
+                console.log(`[DEBUG] Time limit reached on last recording (${currentRecordingIndex + 1}/${totalRecordings})`);
+                console.log(`[DEBUG] Current state - isRecording: ${isRecording}, isCountingDown: ${isCountingDown}, isSessionComplete: ${isSessionComplete}`);
                 
                 // Stop recording
                 if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+                  console.log(`[DEBUG] Stopping MediaRecorder (current state: ${mediaRecorderRef.current.state})`);
                   mediaRecorderRef.current.stop();
+                } else {
+                  console.log(`[DEBUG] MediaRecorder not active or not available`);
                 }
                 
                 // Clear any timers
                 if (recordingTimerRef.current) {
+                  console.log(`[DEBUG] Clearing existing timer`);
                   clearInterval(recordingTimerRef.current);
                   recordingTimerRef.current = null;
                 }
                 
                 // Force session completion with a small delay to ensure recording is processed
+                console.log(`[DEBUG] Setting timeout to complete session in 500ms`);
                 setTimeout(() => {
+                  console.log(`[DEBUG] Timeout fired - setting isSessionComplete to true`);
                   setIsSessionComplete(true);
-                  console.log("Time limit reached on last recording - forcing session completion");
                   
                   // Force app state transition directly
                   if (typeof window !== 'undefined') {
-                    // Add a class to the body to signal completion
+                    console.log(`[DEBUG] Adding recording-complete class to body`);
                     document.body.classList.add('recording-complete');
                     
-                    // Dispatch a custom event that the main component can listen for
-                    const event = new CustomEvent('recordingSessionComplete');
+                    console.log(`[DEBUG] Dispatching recordingSessionComplete event`);
+                    const event = new CustomEvent('recordingSessionComplete', { 
+                      detail: { 
+                        timestamp: new Date().toISOString(),
+                        recordingIndex: currentRecordingIndex,
+                        totalRecordings: totalRecordings
+                      } 
+                    });
                     window.dispatchEvent(event);
                   }
                 }, 500);
+                
+                // Prevent any further recording attempts
+                console.log(`[DEBUG] Setting preventFurtherRecording flag`);
+                window._preventFurtherRecording = true;
               } else {
                 // For non-last recordings, move to next
+                console.log(`[DEBUG] Moving to next recording (${currentRecordingIndex + 1} → ${currentRecordingIndex + 2}/${totalRecordings})`);
                 nextRecording();
               }
               return null;
@@ -322,14 +350,25 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
   }
   
   const startRecording = async (skipCountdown = false) => {
+    console.log(`[DEBUG] startRecording called with skipCountdown: ${skipCountdown}`);
+    console.log(`[DEBUG] Current state - isRecording: ${isRecording}, isCountingDown: ${isCountingDown}, isSessionComplete: ${isSessionComplete}`);
+    
+    // Check if we should prevent further recordings
+    if (window._preventFurtherRecording) {
+      console.log(`[DEBUG] Preventing recording in startRecording due to _preventFurtherRecording flag`);
+      return;
+    }
+    
     // Reset if starting a new session
     if (isSessionComplete) {
+      console.log(`[DEBUG] Resetting session because isSessionComplete is true`);
       setCurrentRecordingIndex(0)
       setIsSessionComplete(false)
       isFirstRecordingRef.current = true // Reset first recording flag
     }
     
     // Use the current recording index
+    console.log(`[DEBUG] Calling startRecordingWithIndex with index: ${currentRecordingIndex}`);
     await startRecordingWithIndex(currentRecordingIndex, skipCountdown)
   }
 
@@ -347,29 +386,77 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
   }
   
   const nextRecording = async () => {
+    console.log(`[DEBUG] nextRecording called`);
+    console.log(`[DEBUG] Current state - isRecording: ${isRecording}, isCountingDown: ${isCountingDown}, isSessionComplete: ${isSessionComplete}`);
+    console.log(`[DEBUG] Current recording index: ${currentRecordingIndex}, total: ${totalRecordings}`);
+    
+    // Check if we should prevent further recordings
+    if (window._preventFurtherRecording) {
+      console.log(`[DEBUG] Preventing further recording in nextRecording due to _preventFurtherRecording flag`);
+      return;
+    }
+    
     // Stop the current recording
+    console.log(`[DEBUG] Stopping current recording`);
     stopRecording()
     
     // Move to the next recording index
     const nextIndex = currentRecordingIndex + 1
+    console.log(`[DEBUG] Moving to next index: ${nextIndex}`);
     
     // Update the current recording index state
     setCurrentRecordingIndex(nextIndex)
     
     // Check if we've reached the end of the session
     if (nextIndex >= totalRecordings) {
+      console.log(`[DEBUG] Reached end of session (index ${nextIndex} >= total ${totalRecordings})`);
+      console.log(`[DEBUG] Setting isSessionComplete to true`);
       setIsSessionComplete(true)
+      
+      // Set flag to prevent further recordings
+      console.log(`[DEBUG] Setting preventFurtherRecording flag`);
+      window._preventFurtherRecording = true;
     } else {
       // Start the next recording with a small delay to ensure the previous one is processed
+      console.log(`[DEBUG] Setting timeout to start next recording in 500ms`);
       setTimeout(() => {
+        console.log(`[DEBUG] Timeout fired - starting recording for index ${nextIndex}`);
         startRecordingWithIndex(nextIndex, false) // Start with countdown and specify index
       }, 500)
     }
   }
   
   const completeSession = () => {
+    console.log(`[DEBUG] completeSession called`);
+    console.log(`[DEBUG] Current state - isRecording: ${isRecording}, isCountingDown: ${isCountingDown}, isSessionComplete: ${isSessionComplete}`);
+    console.log(`[DEBUG] Current recording index: ${currentRecordingIndex}, total: ${totalRecordings}`);
+    
+    console.log(`[DEBUG] Stopping recording`);
     stopRecording()
+    
+    console.log(`[DEBUG] Setting isSessionComplete to true`);
     setIsSessionComplete(true)
+    
+    // Set flag to prevent further recordings
+    console.log(`[DEBUG] Setting preventFurtherRecording flag`);
+    window._preventFurtherRecording = true;
+    
+    // Force app state transition directly
+    if (typeof window !== 'undefined') {
+      console.log(`[DEBUG] Adding recording-complete class to body`);
+      document.body.classList.add('recording-complete');
+      
+      console.log(`[DEBUG] Dispatching recordingSessionComplete event`);
+      const event = new CustomEvent('recordingSessionComplete', { 
+        detail: { 
+          timestamp: new Date().toISOString(),
+          recordingIndex: currentRecordingIndex,
+          totalRecordings: totalRecordings,
+          source: 'completeSession'
+        } 
+      });
+      window.dispatchEvent(event);
+    }
   }
 
   return {

@@ -15,9 +15,70 @@ import PersonalDetailsCollector, { PersonalDetailField, PersonalDetailsConfig, P
 // App states
 type AppState = "personal_details" | "recording" | "completed"
 
+// Extend Window interface to include our custom properties
+declare global {
+  interface Window {
+    _debugInfo?: {
+      completionAttempts: number;
+      lastCompletionTime: string | null;
+      events: Array<{
+        timestamp: string;
+        message: string;
+        data: any;
+      }>;
+    };
+    _logDebug?: (message: string, data?: any) => void;
+    _preventFurtherRecording?: boolean;
+  }
+}
+
+// Add a global flag to track completion state
+if (typeof window !== 'undefined') {
+  window._debugInfo = window._debugInfo || {
+    completionAttempts: 0,
+    lastCompletionTime: null,
+    events: []
+  };
+  
+  // Add a helper function to log debug info
+  window._logDebug = (message: string, data: any = {}) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[DEBUG ${timestamp}] ${message}`, data);
+    
+    if (window._debugInfo) {
+      window._debugInfo.events.push({
+        timestamp,
+        message,
+        data
+      });
+    }
+  };
+  
+  // Initialize the prevention flag
+  window._preventFurtherRecording = window._preventFurtherRecording || false;
+  
+  if (window._logDebug) {
+    window._logDebug('SnipePage component initialized');
+  }
+}
+
 export default function SnipePage() {
   // Check for URL parameters on initial load
   const [initialParamsChecked, setInitialParamsChecked] = useState(false)
+  
+  // Log component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window._logDebug) {
+      window._logDebug('SnipePage component mounted');
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (typeof window !== 'undefined' && window._logDebug) {
+        window._logDebug('SnipePage component unmounting');
+      }
+    };
+  }, []);
   
   // State management
   const [appState, setAppState] = useState<AppState>("personal_details")
@@ -111,10 +172,27 @@ export default function SnipePage() {
     };
     
     // Add listener for custom completion event
-    const handleSessionComplete = () => {
-      console.log("Received session complete event - forcing transition to completed state");
+    const handleSessionComplete = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const detail = customEvent.detail || {};
+      
+      console.log("[DEBUG] Received session complete event:", JSON.stringify(detail));
+      console.log(`[DEBUG] Current app state: ${appState}`);
+      console.log(`[DEBUG] Current recording state - isRecording: ${isRecording}, isCountingDown: ${isCountingDown}`);
+      console.log(`[DEBUG] Recording progress: ${currentRecordingIndex}/${totalRecordings}`);
+      
+      // Force immediate completion
+      console.log("[DEBUG] Stopping camera");
       stopCamera(); // Stop the camera
+      
+      console.log("[DEBUG] Setting app state to 'completed'");
       setAppState("completed"); // Force transition to completed state
+      
+      // Add a visual indicator that can be seen in the DOM
+      document.body.setAttribute('data-recording-completed', 'true');
+      document.body.style.border = '5px solid green';
+      
+      console.log("[DEBUG] Session completion handler finished");
     };
     
     // Add event listeners
@@ -184,10 +262,24 @@ export default function SnipePage() {
 
   // Handle session completion
   if (isSessionComplete) {
+    console.log("[DEBUG] isSessionComplete detected in main component render");
+    console.log(`[DEBUG] Current app state: ${appState}`);
+    console.log(`[DEBUG] Current recording state - isRecording: ${isRecording}, isCountingDown: ${isCountingDown}`);
+    console.log(`[DEBUG] Recording progress: ${currentRecordingIndex}/${totalRecordings}`);
+    
     // Stop the camera and transition to completed state
     setTimeout(() => {
+      console.log("[DEBUG] isSessionComplete timeout fired");
+      console.log("[DEBUG] Stopping camera");
       stopCamera() // Stop the camera when recordings are complete
+      
+      console.log("[DEBUG] Setting app state to 'completed'");
       setAppState("completed")
+      
+      // Add a visual indicator
+      document.body.setAttribute('data-completion-method', 'isSessionComplete');
+      
+      console.log("[DEBUG] Session completion via isSessionComplete complete");
     }, 100)
   }
 
