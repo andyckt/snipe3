@@ -159,13 +159,17 @@ export function useConversationRecording(streamRef: React.RefObject<MediaStream 
                 recordingTimerRef.current = null;
               }
               
-              // Check if this is the last recording (would have "Done" button)
-              const isLastRecording = currentRecordingIndex === totalRecordings - 1;
-              if (isLastRecording) {
-                // If it's the last recording (has "Done" button), complete the session
-                completeSession();
+              // Force completion if this is the last recording
+              if (currentRecordingIndex === totalRecordings - 1) {
+                // This is the last recording (with "Done" button)
+                // Stop recording and force session completion
+                stopRecording();
+                setIsSessionComplete(true);
+                
+                // Log for debugging
+                console.log("Time limit reached on last recording - forcing session completion");
               } else {
-                // Otherwise (has "Next" button), move to the next recording
+                // For non-last recordings, move to next
                 nextRecording();
               }
               return null;
