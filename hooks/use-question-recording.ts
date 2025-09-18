@@ -290,6 +290,10 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
                 console.log(`[DEBUG] Time limit reached on last recording (${currentRecordingIndex + 1}/${totalRecordings})`);
                 console.log(`[DEBUG] Current state - isRecording: ${isRecording}, isCountingDown: ${isCountingDown}, isSessionComplete: ${isSessionComplete}`);
                 
+                // CRITICAL: Immediately set flags to prevent any further recordings
+                console.log(`[DEBUG] Setting preventFurtherRecording flag IMMEDIATELY`);
+                window._preventFurtherRecording = true;
+                
                 // Stop recording
                 if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
                   console.log(`[DEBUG] Stopping MediaRecorder (current state: ${mediaRecorderRef.current.state})`);
@@ -305,32 +309,54 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
                   recordingTimerRef.current = null;
                 }
                 
-                // Force session completion with a small delay to ensure recording is processed
-                console.log(`[DEBUG] Setting timeout to complete session in 500ms`);
-                setTimeout(() => {
-                  console.log(`[DEBUG] Timeout fired - setting isSessionComplete to true`);
-                  setIsSessionComplete(true);
+                // CRITICAL FIX: Directly force transition to completed state
+                // This bypasses React state updates which might be causing the issue
+                if (typeof window !== 'undefined') {
+                  console.log(`[DEBUG] CRITICAL FIX: Directly forcing completion`);
                   
-                  // Force app state transition directly
-                  if (typeof window !== 'undefined') {
-                    console.log(`[DEBUG] Adding recording-complete class to body`);
-                    document.body.classList.add('recording-complete');
-                    
-                    console.log(`[DEBUG] Dispatching recordingSessionComplete event`);
+                  // Add visual indicator
+                  document.body.classList.add('recording-complete');
+                  document.body.style.border = '5px solid red';
+                  
+                  // Force immediate completion
+                  setTimeout(() => {
+                    // Dispatch event to force app state transition
+                    console.log(`[DEBUG] Dispatching recordingSessionComplete event with FORCE flag`);
                     const event = new CustomEvent('recordingSessionComplete', { 
                       detail: { 
                         timestamp: new Date().toISOString(),
                         recordingIndex: currentRecordingIndex,
-                        totalRecordings: totalRecordings
+                        totalRecordings: totalRecordings,
+                        force: true
                       } 
                     });
                     window.dispatchEvent(event);
-                  }
-                }, 500);
-                
-                // Prevent any further recording attempts
-                console.log(`[DEBUG] Setting preventFurtherRecording flag`);
-                window._preventFurtherRecording = true;
+                    
+                    // Set state after dispatching event
+                    console.log(`[DEBUG] Setting isSessionComplete to true`);
+                    setIsSessionComplete(true);
+                    
+                    // CRITICAL: Force redirect to thank you page as last resort
+                    setTimeout(() => {
+                      if (document.body.getAttribute('data-recording-completed') !== 'true') {
+                        console.log(`[DEBUG] EMERGENCY REDIRECT: Force navigation to thank you page`);
+                        // Force app state change by manipulating DOM directly
+                        const completedScreen = document.createElement('div');
+                        completedScreen.className = 'flex flex-col h-screen w-full overflow-hidden bg-white md:bg-gray-100 md:items-center md:justify-center';
+                        completedScreen.innerHTML = `
+                          <div class="flex flex-col h-full w-full bg-white md:max-w-sm md:h-screen p-8 items-center justify-center text-center">
+                            <h1 class="text-3xl font-bold mb-4">Thank You!</h1>
+                            <p class="text-lg">
+                              All ${totalRecordings} recordings have been completed and downloaded.
+                            </p>
+                          </div>
+                        `;
+                        document.body.innerHTML = '';
+                        document.body.appendChild(completedScreen);
+                      }
+                    }, 1000);
+                  }, 100);
+                }
               } else {
                 // For non-last recordings, move to next
                 console.log(`[DEBUG] Moving to next recording (${currentRecordingIndex + 1} → ${currentRecordingIndex + 2}/${totalRecordings})`);

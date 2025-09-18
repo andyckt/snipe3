@@ -162,35 +162,79 @@ export function useConversationRecording(streamRef: React.RefObject<MediaStream 
               // Force completion if this is the last recording
               if (currentRecordingIndex === totalRecordings - 1) {
                 // This is the last recording (with "Done" button)
+                console.log(`[DEBUG] Time limit reached on last recording (${currentRecordingIndex + 1}/${totalRecordings})`);
+                console.log(`[DEBUG] Current state - isRecording: ${isRecording}, isCountingDown: ${isCountingDown}, isSessionComplete: ${isSessionComplete}`);
+                
+                // CRITICAL: Immediately set flags to prevent any further recordings
+                console.log(`[DEBUG] Setting preventFurtherRecording flag IMMEDIATELY`);
+                window._preventFurtherRecording = true;
                 
                 // Stop recording
                 if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+                  console.log(`[DEBUG] Stopping MediaRecorder (current state: ${mediaRecorderRef.current.state})`);
                   mediaRecorderRef.current.stop();
+                } else {
+                  console.log(`[DEBUG] MediaRecorder not active or not available`);
                 }
                 
                 // Clear any timers
                 if (recordingTimerRef.current) {
+                  console.log(`[DEBUG] Clearing existing timer`);
                   clearInterval(recordingTimerRef.current);
                   recordingTimerRef.current = null;
                 }
                 
-                // Force session completion with a small delay to ensure recording is processed
-                setTimeout(() => {
-                  setIsSessionComplete(true);
-                  console.log("Time limit reached on last recording - forcing session completion");
+                // CRITICAL FIX: Directly force transition to completed state
+                // This bypasses React state updates which might be causing the issue
+                if (typeof window !== 'undefined') {
+                  console.log(`[DEBUG] CRITICAL FIX: Directly forcing completion`);
                   
-                  // Force app state transition directly
-                  if (typeof window !== 'undefined') {
-                    // Add a class to the body to signal completion
-                    document.body.classList.add('recording-complete');
-                    
-                    // Dispatch a custom event that the main component can listen for
-                    const event = new CustomEvent('recordingSessionComplete');
+                  // Add visual indicator
+                  document.body.classList.add('recording-complete');
+                  document.body.style.border = '5px solid red';
+                  
+                  // Force immediate completion
+                  setTimeout(() => {
+                    // Dispatch event to force app state transition
+                    console.log(`[DEBUG] Dispatching recordingSessionComplete event with FORCE flag`);
+                    const event = new CustomEvent('recordingSessionComplete', { 
+                      detail: { 
+                        timestamp: new Date().toISOString(),
+                        recordingIndex: currentRecordingIndex,
+                        totalRecordings: totalRecordings,
+                        force: true
+                      } 
+                    });
                     window.dispatchEvent(event);
-                  }
-                }, 500);
+                    
+                    // Set state after dispatching event
+                    console.log(`[DEBUG] Setting isSessionComplete to true`);
+                    setIsSessionComplete(true);
+                    
+                    // CRITICAL: Force redirect to thank you page as last resort
+                    setTimeout(() => {
+                      if (document.body.getAttribute('data-recording-completed') !== 'true') {
+                        console.log(`[DEBUG] EMERGENCY REDIRECT: Force navigation to thank you page`);
+                        // Force app state change by manipulating DOM directly
+                        const completedScreen = document.createElement('div');
+                        completedScreen.className = 'flex flex-col h-screen w-full overflow-hidden bg-white md:bg-gray-100 md:items-center md:justify-center';
+                        completedScreen.innerHTML = `
+                          <div class="flex flex-col h-full w-full bg-white md:max-w-sm md:h-screen p-8 items-center justify-center text-center">
+                            <h1 class="text-3xl font-bold mb-4">Thank You!</h1>
+                            <p class="text-lg">
+                              All ${totalRecordings} recordings have been completed and downloaded.
+                            </p>
+                          </div>
+                        `;
+                        document.body.innerHTML = '';
+                        document.body.appendChild(completedScreen);
+                      }
+                    }, 1000);
+                  }, 100);
+                }
               } else {
                 // For non-last recordings, move to next
+                console.log(`[DEBUG] Moving to next recording (${currentRecordingIndex + 1} → ${currentRecordingIndex + 2}/${totalRecordings})`);
                 nextRecording();
               }
               return null;

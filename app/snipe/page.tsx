@@ -175,8 +175,9 @@ export default function SnipePage() {
     const handleSessionComplete = (event: Event) => {
       const customEvent = event as CustomEvent;
       const detail = customEvent.detail || {};
+      const isForced = detail.force === true;
       
-      console.log("[DEBUG] Received session complete event:", JSON.stringify(detail));
+      console.log(`[DEBUG] Received session complete event (FORCED: ${isForced}):`, JSON.stringify(detail));
       console.log(`[DEBUG] Current app state: ${appState}`);
       console.log(`[DEBUG] Current recording state - isRecording: ${isRecording}, isCountingDown: ${isCountingDown}`);
       console.log(`[DEBUG] Recording progress: ${currentRecordingIndex}/${totalRecordings}`);
@@ -185,12 +186,38 @@ export default function SnipePage() {
       console.log("[DEBUG] Stopping camera");
       stopCamera(); // Stop the camera
       
-      console.log("[DEBUG] Setting app state to 'completed'");
-      setAppState("completed"); // Force transition to completed state
+      // Set global flag to prevent further recordings
+      window._preventFurtherRecording = true;
       
-      // Add a visual indicator that can be seen in the DOM
+      // Mark completion in DOM
       document.body.setAttribute('data-recording-completed', 'true');
-      document.body.style.border = '5px solid green';
+      document.body.style.border = isForced ? '5px solid red' : '5px solid green';
+      
+      // Force state transition with priority handling for forced events
+      if (isForced) {
+        console.log("[DEBUG] FORCED completion - using immediate DOM manipulation");
+        
+        // Create and display the thank you screen directly
+        const completedScreen = document.createElement('div');
+        completedScreen.className = 'flex flex-col h-screen w-full overflow-hidden bg-white md:bg-gray-100 md:items-center md:justify-center';
+        completedScreen.innerHTML = `
+          <div class="flex flex-col h-full w-full bg-white md:max-w-sm md:h-screen p-8 items-center justify-center text-center">
+            <h1 class="text-3xl font-bold mb-4">Thank You!</h1>
+            <p class="text-lg">
+              All ${totalRecordings} recordings have been completed and downloaded.
+            </p>
+          </div>
+        `;
+        
+        // Replace the entire body content
+        const appRoot = document.querySelector('#__next') || document.body;
+        appRoot.innerHTML = '';
+        appRoot.appendChild(completedScreen);
+      } else {
+        // Normal flow - use React state
+        console.log("[DEBUG] Setting app state to 'completed'");
+        setAppState("completed");
+      }
       
       console.log("[DEBUG] Session completion handler finished");
     };
