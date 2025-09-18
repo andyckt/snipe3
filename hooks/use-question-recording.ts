@@ -268,6 +268,15 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
         // Start countdown timer with slightly longer interval (1050ms instead of 1000ms)
         // to compensate for the timer running slightly fast
         console.log(`[startRecordingWithIndex] Starting countdown timer for ${timeInSeconds} seconds`)
+        
+        // Capture the current recording index in a closure to ensure we're using the correct value
+        // This is critical because the currentRecordingIndex state might change by the time the callback runs
+        const capturedRecordingIndex = recordingIndex;
+        const isLastRecordingCaptured = capturedRecordingIndex === totalRecordings - 1;
+        
+        console.log(`[startRecordingWithIndex] Captured recording index: ${capturedRecordingIndex + 1}/${totalRecordings}`)
+        console.log(`[startRecordingWithIndex] Is last recording: ${isLastRecordingCaptured}`)
+        
         recordingTimerRef.current = setInterval(() => {
           setRecordingTimeLeft(prev => {
             if (prev === null) {
@@ -281,8 +290,8 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
             
             if (prev <= 1) {
               // Time's up - stop the recording and clear the interval
-              console.log(`[timerCallback] Time's up! Recording ${currentRecordingIndex + 1}/${totalRecordings} complete`)
-              console.log(`[timerCallback] isLastRecording: ${currentRecordingIndex === totalRecordings - 1}`)
+              console.log(`[timerCallback] Time's up! Recording ${capturedRecordingIndex + 1}/${totalRecordings} complete`)
+              console.log(`[timerCallback] Is last recording (captured): ${isLastRecordingCaptured}`)
               
               if (recordingTimerRef.current) {
                 console.log(`[timerCallback] Clearing timer interval`)
@@ -290,15 +299,21 @@ export function useQuestionRecording(streamRef: React.RefObject<MediaStream | nu
                 recordingTimerRef.current = null;
               }
               
-              // Automatically move to the next recording
-              console.log(`[timerCallback] Calling nextRecording() due to time limit expiration`)
-              nextRecording();
+              if (isLastRecordingCaptured) {
+                // If this is the last recording, call completeSession instead of nextRecording
+                console.log(`[timerCallback] This is the last recording, calling completeSession() instead of nextRecording()`)
+                completeSession();
+              } else {
+                // Otherwise, move to the next recording
+                console.log(`[timerCallback] Calling nextRecording() due to time limit expiration`)
+                nextRecording();
+              }
               return null;
             }
             
             // Log every 5 seconds for less verbose output
             if (prev % 5 === 0) {
-              console.log(`[timerCallback] Time left: ${prev} seconds`)
+              console.log(`[timerCallback] Time left: ${prev} seconds (Recording ${capturedRecordingIndex + 1}/${totalRecordings})`)
             }
             
             return prev - 1;
